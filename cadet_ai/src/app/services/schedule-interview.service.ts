@@ -1,147 +1,101 @@
 // src/app/services/interview.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { Interview, InterviewFormData } from '../models/interview.model';
-// import { environment } from '../../environments/environment';
+import { environment } from '../../environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ScheduleInterviewService {
-  // private apiUrl = `${environment.apiUrl}/interviews`;
-  private apiUrl = 'https://api.example.com/interviews'; // Replace with your actual API URL
+  private apiUrl = `${environment.apiUrl}/interviews`;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  /**
-   * Create a new interview
-   * @param formData The interview form data
-   * @returns Observable of the created interview
-   */
-  createInterview(formData: InterviewFormData): Observable<Interview> {
-    // Combine date and time into a single Date object
-    const scheduledDateTime = new Date(`${formData.scheduledDate}T${formData.scheduledTime}`);
-    
-    // Convert difficulty level number to string
-    const difficultyMapping = {
-      1: 'beginner',
-      2: 'intermediate',
-      3: 'advanced'
-    };
-    
-    const difficulty = difficultyMapping[formData.difficultyLevel as keyof typeof difficultyMapping];
-    
-    // Prepare data for API
-    const interviewData = {
-      title: formData.title,
-      description: formData.description,
-      interviewType: formData.interviewType,
-      candidateName: formData.candidateName,
-      candidateEmail: formData.candidateEmail,
-      scheduledDate: scheduledDateTime.toISOString(),
-      duration: formData.duration,
-      difficulty: difficulty,
-      topics: formData.topics
-    };
-    console.log('Interview Data:', interviewData);
-    return this.http.post<Interview>(this.apiUrl, interviewData);
+  // Get HTTP headers with auth token
+  private getHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token');
+    return new HttpHeaders().set('Authorization', `Bearer ${token}`);
   }
 
-  /**
-   * Get all interviews with optional filters
-   * @param filters Optional filters for status, date range, etc.
-   * @returns Observable of interviews array
-   */
-  getInterviews(filters?: {
-    status?: string;
-    startDate?: string;
-    endDate?: string;
-    limit?: number;
-  }): Observable<Interview[]> {
-    let params = new HttpParams();
-    
-    if (filters) {
-      if (filters.status) {
-        params = params.set('status', filters.status);
-      }
-      if (filters.startDate) {
-        params = params.set('startDate', filters.startDate);
-      }
-      if (filters.endDate) {
-        params = params.set('endDate', filters.endDate);
-      }
-      if (filters.limit) {
-        params = params.set('limit', filters.limit.toString());
-      }
-    }
-    
-    return this.http.get<Interview[]>(this.apiUrl, { params })
-      .pipe(
-        map(interviews => interviews.map(interview => ({
-          ...interview,
-          scheduledDate: new Date(interview.scheduledDate)
-        })))
-      );
+  // Create a new interview
+  createInterview(interviewData: any): Observable<any> {
+    console.log('Interview data=', interviewData);
+    return this.http.post(this.apiUrl, interviewData, {
+      headers: this.getHeaders(),
+    });
   }
 
-  /**
-   * Get a specific interview by ID
-   * @param id The interview ID
-   * @returns Observable of the interview
-   */
-  getInterview(id: string): Observable<Interview> {
-    return this.http.get<Interview>(`${this.apiUrl}/${id}`)
-      .pipe(
-        map(interview => ({
-          ...interview,
-          scheduledDate: new Date(interview.scheduledDate)
-        }))
-      );
+  // Get all interviews
+  getAllInterviews(): Observable<any> {
+    return this.http.get(this.apiUrl, { headers: this.getHeaders() });
   }
 
-  /**
-   * Update an existing interview
-   * @param id The interview ID
-   * @param updateData The data to update
-   * @returns Observable of the updated interview
-   */
-  updateInterview(id: string, updateData: Partial<Interview>): Observable<Interview> {
-    return this.http.put<Interview>(`${this.apiUrl}/${id}`, updateData);
+  // Get interview by ID
+  getInterview(id: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/${id}`, {
+      headers: this.getHeaders(),
+    });
   }
 
-  /**
-   * Delete an interview
-   * @param id The interview ID
-   * @returns Observable of the deletion result
-   */
-  deleteInterview(id: string): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(`${this.apiUrl}/${id}`);
+  //Get current user's interview
+  getMyInterview(): Observable<any> {
+    // Get the token from localStorage or wherever you store it
+    const token = localStorage.getItem('token');
+
+    // Create headers with the Authorization bearer token
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+    });
+
+    // Make the request with the headers
+    return this.http.get(`${this.apiUrl}/my-interview`, { headers });
+  }
+  // Update interview
+  updateInterview(id: string, interviewData: any): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${id}`, interviewData, {
+      headers: this.getHeaders(),
+    });
   }
 
-  /**
-   * Cancel an interview
-   * @param id The interview ID
-   * @returns Observable of the updated interview
-   */
-  cancelInterview(id: string): Observable<Interview> {
-    return this.http.put<Interview>(`${this.apiUrl}/${id}/cancel`, {});
+  // Delete interview
+  deleteInterview(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, {
+      headers: this.getHeaders(),
+    });
   }
 
-  /**
-   * Get all available topics for interviews
-   * @returns Observable of topics array
-   */
-  getAvailableTopics(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/topics`);
+  // Cancel interview
+  cancelInterview(id: string): Observable<any> {
+    return this.http.patch(
+      `${this.apiUrl}/${id}/cancel`,
+      {},
+      { headers: this.getHeaders() }
+    );
   }
 
-  /**
-   * Get all available interview types
-   * @returns Observable of interview types array
-   */
-  getInterviewTypes(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/types`);
+  // Get interview credentials
+  getInterviewCredentials(id: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/${id}/credentials`, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  // Get available topics
+  getAvailableTopics(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/topics`, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  // Get interview types
+  getInterviewTypes(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/types`, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  getInterviewByAccessCode(code: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/interviews/access/${code}`);
   }
 }

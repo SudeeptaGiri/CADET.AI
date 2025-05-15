@@ -1,16 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { ScheduleInterviewService } from '../../services/schedule-interview.service';
 import { InterviewFormData } from '../../models/interview.model';
+import { trigger, transition, style, animate } from '@angular/animations';
+import { json } from 'express';
 
 @Component({
   selector: 'app-schedule-interview',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './schedule-interview.component.html',
-  styleUrls: ['./schedule-interview.component.css']
+  styleUrls: ['./schedule-interview.component.css'],
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(20px)' }),
+        animate('0.5s ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ])
+  ]
 })
 export class ScheduleInterviewComponent implements OnInit {
   interviewForm!: FormGroup;
@@ -73,7 +82,8 @@ export class ScheduleInterviewComponent implements OnInit {
     this.interviewService.getAvailableTopics()
       .subscribe({
         next: (topics) => {
-          this.availableTopics = topics;
+          console.log('Available topics:', topics);
+          this.availableTopics = topics.data || [];
           this.isLoadingTopics = false;
         },
         error: (error) => {
@@ -129,16 +139,16 @@ export class ScheduleInterviewComponent implements OnInit {
     
     switch (difficultyValue) {
       case 1:
-        this.difficultyLabel = 'Beginner';
+        this.difficultyLabel = 'beginner';
         break;
       case 2:
-        this.difficultyLabel = 'Intermediate';
+        this.difficultyLabel = 'intermediate';
         break;
       case 3:
-        this.difficultyLabel = 'Advanced';
+        this.difficultyLabel = 'advanced';
         break;
       default:
-        this.difficultyLabel = 'Intermediate';
+        this.difficultyLabel = 'intermediate';
     }
   }
 
@@ -156,7 +166,8 @@ export class ScheduleInterviewComponent implements OnInit {
 
     const formData: InterviewFormData = {
       ...this.interviewForm.value,
-      topics: this.selectedTopics
+      topics: this.selectedTopics,
+      difficulty: this.difficultyLabel
     };
 
     this.interviewService.createInterview(formData)

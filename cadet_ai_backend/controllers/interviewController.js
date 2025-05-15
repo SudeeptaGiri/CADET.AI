@@ -67,6 +67,14 @@ exports.createInterview = catchAsync(async (req, res, next) => {
   req.body.createdBy = req.user._id;
   
   // Create interview
+  // const interviewData = req.body;
+  // if(interviewData.difficultyLevel=== 1) {
+  //   interviewData.difficultyLevel="beginner";
+  // }else if(interviewData.difficultyLevel=== 2) {
+  //   interviewData.difficultyLevel="intermediate";
+  // } else if(interviewData.difficultyLevel=== 3) {
+  //   interviewData.difficultyLevel="advanced";
+  // }
   const newInterview = await Interview.create(req.body);
   
   // Send interview invitation email
@@ -228,6 +236,38 @@ exports.getInterviewCredentials = catchAsync(async (req, res, next) => {
     data: {
       accessCode: interview.accessCode,
       accessPassword: interview.accessPasswordPlain
+    }
+  });
+});
+
+// Get the interview assigned to the logged-in candidate
+exports.getMyInterview = catchAsync(async (req, res, next) => {
+  // Check if user is a candidate
+  if (req.user.role !== 'candidate') {
+    return next(new AppError('Only candidates can access this route', 403));
+  }
+  
+  // Check if the candidate has an assigned interview
+  if (!req.user.interview) {
+    return next(new AppError('No interview assigned to this candidate', 404));
+  }
+  
+  // Find the interview
+  const interview = await Interview.findById(req.user.interview);
+  
+  if (!interview) {
+    return next(new AppError('Interview not found', 404));
+  }
+  
+  // Check if the candidate is authorized to access this interview
+  if (interview.candidateEmail !== req.user.email) {
+    return next(new AppError('You are not authorized to access this interview', 403));
+  }
+  
+  res.status(200).json({
+    status: 'success',
+    data: {
+      interview
     }
   });
 });
