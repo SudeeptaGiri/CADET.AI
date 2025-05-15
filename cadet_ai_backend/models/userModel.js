@@ -34,7 +34,12 @@ const userSchema = new mongoose.Schema({
         return el === this.password;
       },
       message: 'Passwords do not match'
-    }
+    },
+    
+  },
+  interview: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Interview'
   },
   passwordChangedAt: Date,
   passwordResetToken: String,

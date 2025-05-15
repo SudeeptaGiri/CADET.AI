@@ -1,0 +1,113 @@
+<!-- src/app/components/interview-access/interview-access.component.html -->
+<div class="min-h-screen w-full bg-gradient-to-br from-gray-900 via-blue-950 to-indigo-900 flex items-center justify-center p-4 font-sans">
+  <!-- Glass Card Container with subtle animation -->
+  <div class="w-full max-w-md transform transition-all duration-500 hover:translate-y-[-5px]" 
+       [@fadeIn]>
+    <div class="backdrop-blur-md bg-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-white/20 overflow-hidden">
+      <!-- Header with glowing border effect -->
+      <div class="relative bg-gradient-to-r from-blue-600 to-indigo-600 p-6 overflow-hidden">
+        <div class="absolute inset-0 bg-grid-white/10 opacity-20"></div>
+        <h4 class="text-xl font-medium text-white tracking-wide relative z-10 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Access Your Interview
+        </h4>
+      </div>
+
+      <!-- Card Body -->
+      <div class="p-6 space-y-6">
+        <form (submit)="accessInterview()">
+          <!-- Access Code Input -->
+          <div class="mb-5">
+            <label for="accessCode" class="block text-cyan-300 text-sm font-medium mb-2 tracking-wide">
+              Access Code
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+              </div>
+              <input 
+                type="text" 
+                id="accessCode" 
+                [(ngModel)]="accessCode" 
+                name="accessCode" 
+                placeholder="Enter your access code"
+                required
+                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-blue-500/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 rounded-lg text-white placeholder-gray-400 outline-none transition-all duration-300"
+              >
+            </div>
+          </div>
+          
+          <!-- Password Input -->
+          <div class="mb-6">
+            <label for="password" class="block text-cyan-300 text-sm font-medium mb-2 tracking-wide">
+              Password
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <input 
+                type="password" 
+                id="password" 
+                [(ngModel)]="password" 
+                name="password" 
+                placeholder="Enter your password"
+                required
+                class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-blue-500/30 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50 rounded-lg text-white placeholder-gray-400 outline-none transition-all duration-300"
+              >
+            </div>
+          </div>
+          
+          <!-- Submit Button -->
+          <div class="mt-8">
+            <button 
+              type="submit" 
+              [disabled]="loading"
+              class="w-full relative overflow-hidden group bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              <!-- Button glow effect -->
+              <span class="absolute inset-0 w-full h-full bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
+              
+              <!-- Loading spinner -->
+              <span *ngIf="loading" class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+              
+              <!-- Button text -->
+              <span class="flex items-center justify-center" [class.opacity-0]="loading">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                Access Interview
+              </span>
+            </button>
+          </div>
+        </form>
+        
+        <!-- Admin Link -->
+        <div class="mt-6 text-center">
+          <p class="text-gray-300 text-sm">
+            Are you an administrator? 
+            <a routerLink="/login" class="text-cyan-400 hover:text-cyan-300 transition-colors duration-300 underline-offset-4 hover:underline">
+              Login here
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Decorative elements -->
+    <div class="absolute top-10 left-10 w-32 h-32 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+    <div class="absolute top-0 right-20 w-32 h-32 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+    <div class="absolute bottom-10 left-20 w-32 h-32 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+  </div>
+</div>

@@ -1,0 +1,275 @@
+<!-- src/app/components/interview-list/interview-list.component.html -->
+<div class="min-h-screen w-full bg-gradient-to-br from-gray-900 via-blue-950 to-indigo-900 p-4 md:p-6 lg:p-8 font-sans">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+      <div>
+        <h2 class="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-3 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Scheduled Interviews
+        </h2>
+        <p class="text-blue-300 mt-1">Manage your upcoming interview sessions</p>
+      </div>
+      
+      <button 
+        routerLink="/interviews/create"
+        class="group relative overflow-hidden bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium py-2.5 px-5 rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-900 shadow-lg shadow-blue-500/30">
+        <!-- Button glow effect -->
+        <span class="absolute inset-0 w-full h-full bg-gradient-to-r from-white to-cyan-300 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
+        
+        <span class="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Schedule New Interview
+        </span>
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex justify-center my-12">
+      <div class="relative w-20 h-20">
+        <!-- Outer ring -->
+        <div class="absolute inset-0 border-4 border-t-cyan-400 border-r-blue-500 border-b-indigo-500 border-l-purple-500 rounded-full animate-spin"></div>
+        <!-- Inner ring -->
+        <div class="absolute inset-2 border-4 border-t-transparent border-r-transparent border-b-transparent border-l-cyan-400 rounded-full animate-spin animation-delay-500"></div>
+        <!-- Center dot -->
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="h-2 w-2 bg-cyan-400 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && interviews.length === 0" 
+         class="backdrop-blur-md bg-white/5 rounded-2xl shadow-xl border border-white/10 p-8 text-center my-12 max-w-2xl mx-auto">
+      <div class="flex flex-col items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-blue-400 mb-4 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <h3 class="text-xl font-medium text-white mb-2">No interviews scheduled yet</h3>
+        <p class="text-blue-200 mb-6">Create your first interview to get started</p>
+        <button 
+          routerLink="/interviews/create"
+          class="group bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium py-2.5 px-6 rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900">
+          <span class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Schedule New Interview
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Interview List -->
+    <div *ngIf="!loading && interviews.length > 0" 
+         class="overflow-hidden backdrop-blur-md bg-white/5 rounded-2xl shadow-xl border border-white/10">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="bg-gradient-to-r from-gray-800/80 to-gray-900/80 text-left">
+              <th class="px-6 py-4 text-sm font-medium text-cyan-300 tracking-wider">Title</th>
+              <th class="px-6 py-4 text-sm font-medium text-cyan-300 tracking-wider">Candidate</th>
+              <th class="px-6 py-4 text-sm font-medium text-cyan-300 tracking-wider">Scheduled Date</th>
+              <th class="px-6 py-4 text-sm font-medium text-cyan-300 tracking-wider">Duration</th>
+              <th class="px-6 py-4 text-sm font-medium text-cyan-300 tracking-wider">Status</th>
+              <th class="px-6 py-4 text-sm font-medium text-cyan-300 tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-700/50">
+            <tr *ngFor="let interview of interviews; let i = index" >
+              <td class="px-6 py-4">
+                <div class="font-medium text-white">{{ interview.title }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="font-medium text-white">{{ interview.candidateName }}</div>
+                <div class="text-sm text-blue-300">{{ interview.candidateEmail }}</div>
+              </td>
+              <td class="px-6 py-4 text-blue-100">
+                {{ formatDate(interview.scheduledDate) }}
+              </td>
+              <td class="px-6 py-4 text-blue-100">
+                {{ getDurationString(interview.duration) }}
+              </td>
+              <td class="px-6 py-4">
+                <span [ngClass]="getStatusBadgeClass(interview.status)">
+                  {{ interview.status }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex space-x-2">
+                  <button 
+                    (click)="showCredentials(interview)" 
+                    class="p-2 rounded-lg bg-indigo-600/50 hover:bg-indigo-600 text-white transition-colors duration-200 hover:scale-105 transform tooltip-container"
+                    title="Show Credentials">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                    <span class="tooltip">Credentials</span>
+                  </button>
+                  <button 
+                    (click)="editInterview(interview._id)" 
+                    class="p-2 rounded-lg bg-amber-600/50 hover:bg-amber-600 text-white transition-colors duration-200 hover:scale-105 transform tooltip-container"
+                    title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span class="tooltip">Edit</span>
+                  </button>
+                  <button 
+                    *ngIf="interview.status === 'scheduled'"
+                    (click)="cancelInterview(interview._id)" 
+                    class="p-2 rounded-lg bg-orange-600/50 hover:bg-orange-600 text-white transition-colors duration-200 hover:scale-105 transform tooltip-container"
+                    title="Cancel">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="tooltip">Cancel</span>
+                  </button>
+                  <button 
+                    (click)="deleteInterview(interview._id)" 
+                    class="p-2 rounded-lg bg-rose-600/50 hover:bg-rose-600 text-white transition-colors duration-200 hover:scale-105 transform tooltip-container"
+                    title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span class="tooltip">Delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Credentials Modal -->
+    <div *ngIf="showCredentialsModal" 
+         class="fixed inset-0 flex items-center justify-center z-50 px-4">
+      <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" (click)="closeCredentialsModal()"></div>
+      
+      <div class="relative w-full max-w-md bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-white/10 overflow-hidden z-10">
+        <!-- Modal header with glowing border -->
+        <div class="relative bg-gradient-to-r from-blue-600 to-indigo-600 p-5">
+          <div class="absolute inset-0 bg-grid-white/10 opacity-20"></div>
+          <div class="flex justify-between items-center">
+            <h3 class="text-xl font-medium text-white flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              Interview Access Credentials
+            </h3>
+            <button 
+              (click)="closeCredentialsModal()" 
+              class="text-white hover:text-gray-300 transition-colors"
+              aria-label="Close">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Modal body -->
+        <div class="p-6" *ngIf="selectedInterview">
+          <div class="mb-6 p-4 bg-blue-900/30 border-l-4 border-cyan-400 rounded-r-lg">
+            <div class="flex">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-blue-100">Share these credentials with the candidate to access the interview.</p>
+            </div>
+          </div>
+          
+          <div class="space-y-5">
+            <!-- Interview Title -->
+            <div>
+              <label class="block text-sm font-medium text-cyan-300 mb-2">Interview Title</label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  class="w-full bg-gray-800/50 border border-gray-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-lg py-2.5 px-4 text-white"
+                  [value]="selectedInterview.title" 
+                  readonly>
+              </div>
+            </div>
+            
+            <!-- Access Code -->
+            <div>
+              <label class="block text-sm font-medium text-cyan-300 mb-2">Access Code</label>
+              <div class="relative">
+                <div class="flex">
+                  <input 
+                    type="text" 
+                    class="w-full bg-gray-800/50 border border-gray-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-l-lg py-2.5 px-4 text-white"
+                    [value]="selectedInterview.accessCode" 
+                    readonly>
+                  <button 
+                    class="flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white px-4 rounded-r-lg border-y border-r border-gray-700 transition-colors duration-200"
+                    (click)="copyToClipboard(selectedInterview.accessCode)"
+                    title="Copy to clipboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-12a2 2 0 00-2-2h-2M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Access Password -->
+            <div>
+              <label class="block text-sm font-medium text-cyan-300 mb-2">Access Password</label>
+              <div class="relative">
+                <div class="flex">
+                  <input 
+                    type="text" 
+                    class="w-full bg-gray-800/50 border border-gray-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-l-lg py-2.5 px-4 text-white"
+                    [value]="selectedInterview.accessPasswordPlain" 
+                    readonly>
+                  <button 
+                    class="flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white px-4 rounded-r-lg border-y border-r border-gray-700 transition-colors duration-200"
+                    (click)="copyToClipboard(selectedInterview.accessPasswordPlain)"
+                    title="Copy to clipboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-12a2 2 0 00-2-2h-2M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Scheduled Date -->
+            <div>
+              <label class="block text-sm font-medium text-cyan-300 mb-2">Scheduled Date</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input 
+                  type="text" 
+                  class="w-full bg-gray-800/50 border border-gray-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-lg py-2.5 pl-10 pr-4 text-white"
+                  [value]="formatDate(selectedInterview.scheduledDate)" 
+                  readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Modal footer -->
+        <div class="bg-gray-800/50 px-6 py-4 flex justify-end">
+          <button 
+            type="button" 
+            class="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-5 rounded-lg transition-colors duration-200"
+            (click)="closeCredentialsModal()">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
