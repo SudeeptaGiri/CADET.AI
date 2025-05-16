@@ -1,0 +1,29 @@
+<div class="session-summary">
+  <div class="interview-info" *ngIf="interview">
+    <h3>{{ interview.title }}</h3>
+    <div class="interview-meta">
+      <span class="badge interview-type">{{ interview.interviewType }}</span>
+      <span class="badge interview-difficulty">{{ interview.difficulty }}</span>
+    </div>
+  </div>
+
+  <div class="session-info" *ngIf="session">
+    <div class="current-topic">
+      <strong>Current Topic:</strong> {{ session.currentTopic }}
+    </div>
+    <div class="current-difficulty">
+      <strong>Difficulty:</strong> {{ session.currentDifficulty }}
+    </div>
+    <div class="question-count">
+      <strong>Questions Answered:</strong> {{ session.questionCount }}
+    </div>
+    <div class="session-actions">
+      <button class="btn-change-topic" (click)="changeTopic()">Next Topic</button>
+      <button class="btn-logout" (click)="logout()">Exit Interview</button>
+    </div>
+  </div>
+  
+  <div class="no-session" *ngIf="!session">
+    <p>Loading session...</p>
+  </div>
+</div>

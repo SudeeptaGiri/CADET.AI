@@ -9,6 +9,7 @@ import { ScheduleInterviewComponent } from './components/schedule-interview/sche
 import { InterviewRoomComponent } from './components/interview-room/interview-room.component';
 import { AuthGuard } from './guards/auth.guard';
 import { AdminGuard } from './guards/admin.guard';
+import { InterviewSessionComponent } from './components/interview-practice/interview-practice.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/access', pathMatch: 'full' },
@@ -28,6 +29,11 @@ export const routes: Routes = [
   { 
     path: 'interview-room/:id', 
     component: InterviewRoomComponent, 
+    canActivate: [AuthGuard] 
+  },
+  { 
+    path: 'interview', 
+    component: InterviewSessionComponent, 
     canActivate: [AuthGuard] 
   },
   { path: '**', redirectTo: '/access' }

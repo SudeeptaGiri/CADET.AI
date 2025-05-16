@@ -55,6 +55,8 @@ export class InterviewRoomComponent  {
   audioDetected: boolean = false;
   audioQualityGood: boolean = false;
   identityVerified: boolean = false;
+  interviewStatus: string = 'upcoming';
+  remainingInterviewTime: number = 0;
   
   // Audio visualization
   audioLevels: number[] = Array(20).fill(0);
@@ -179,6 +181,7 @@ export class InterviewRoomComponent  {
     }
   }
   startTimeCheck() {
+    console.log('Starting time check for interview:', this.interview);
     if (!this.interview || !this.interview.scheduledDate) {
       return;
     }
@@ -192,37 +195,60 @@ export class InterviewRoomComponent  {
     this.updateTimeRemaining();
   }
   
-  updateTimeRemaining() {
-    if (!this.interview || !this.interview.scheduledDate) {
-      return;
-    }
-    
-    const now = new Date();
-    const scheduledDate = new Date(this.interview.scheduledDate);
-    const timeDiff = scheduledDate.getTime() - now.getTime();
-    
-    // Check if interview can start (within 15 minutes before scheduled time up to duration after)
-    const fifteenMinutesInMs = 15 * 60 * 1000;
-    const durationInMs = this.interview.duration * 60 * 1000;
-    
-    // Can start if within 15 minutes before scheduled time or during the interview
-    this.canStartInterview = timeDiff <= fifteenMinutesInMs && timeDiff > -durationInMs;
-    
-    // If interview is in the future, calculate and display time remaining
-    if (timeDiff > 0) {
-      const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
-      
-      this.timeUntilInterview = {
-        hours: hours.toString().padStart(2, '0'),
-        minutes: minutes.toString().padStart(2, '0'),
-        seconds: seconds.toString().padStart(2, '0')
-      };
-    } else {
-      this.timeUntilInterview = null;
-    }
+updateTimeRemaining() {
+  if (!this.interview || !this.interview.scheduledDate) {
+    return;
   }
+  
+  // Get current time
+  const now = new Date();
+  
+  // Get scheduled date from database (UTC format)
+  const scheduledDate = new Date(this.interview.scheduledDate);
+  
+  // Adjust scheduled date to be 5 hours and 30 minutes earlier
+  const adjustedScheduledDate = new Date(scheduledDate.getTime() - (5 * 60 * 60 * 1000) - (30 * 60 * 1000));
+  
+  // Calculate time difference in milliseconds using the adjusted date
+  const timeDiff = adjustedScheduledDate.getTime() - now.getTime();
+  const durationInMs = this.interview.duration * 60 * 1000;
+  
+  // Also adjust the end time to be 5 hours and 30 minutes earlier
+  const adjustedEndTime = adjustedScheduledDate.getTime() + durationInMs;
+  
+  if (timeDiff > 0) {
+    // Future interview - show countdown
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+    
+    this.timeUntilInterview = {
+      hours: hours.toString().padStart(2, '0'),
+      minutes: minutes.toString().padStart(2, '0'),
+      seconds: seconds.toString().padStart(2, '0')
+    };
+    
+    this.interviewStatus = 'upcoming';
+    this.canStartInterview = false;
+  } 
+  else if (now.getTime() <= adjustedEndTime) {
+    // Active interview - can be joined
+    this.timeUntilInterview = null;
+    this.interviewStatus = 'active';
+    this.canStartInterview = true;
+    
+    // Calculate remaining interview time
+    const remainingTime = adjustedEndTime - now.getTime();
+    const remainingMinutes = Math.floor(remainingTime / (1000 * 60));
+    this.remainingInterviewTime = remainingMinutes;
+  } 
+  else {
+    // Expired interview
+    this.timeUntilInterview = null;
+    this.interviewStatus = 'expired';
+    this.canStartInterview = false;
+  }
+}
   
   formatDate(date: Date | undefined): string {
     if (!date) return '';
@@ -234,7 +260,8 @@ export class InterviewRoomComponent  {
       month: 'short', 
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'UTC'
     });
   }
   
@@ -252,6 +279,7 @@ export class InterviewRoomComponent  {
         video: true,
         audio: false
       });
+      console.log('Webcam stream:', this.stream);
       
       if (this.webcamVideo && this.webcamVideo.nativeElement) {
         this.webcamVideo.nativeElement.srcObject = this.stream;
@@ -462,7 +490,7 @@ export class InterviewRoomComponent  {
     
     // Navigate to the actual interview room
     if (this.interview) {
-      this.router.navigate(['/interview-session', this.interview._id]);
+      this.router.navigate(['/interview']);
       this.toast.success('Starting interview session...');
     } else {
       this.toast.error('Interview data not available');

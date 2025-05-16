@@ -169,7 +169,7 @@ export class ScheduleInterviewComponent implements OnInit {
       topics: this.selectedTopics,
       difficulty: this.difficultyLabel
     };
-
+    console.log('Form data:', formData);
     this.interviewService.createInterview(formData)
       .subscribe({
         next: (response) => {

@@ -13,7 +13,7 @@ router.use(authController.protect);
 
 //routes accessible to all authenticated candidates
 router.get('/my-interview', interviewController.getMyInterview);
-
+router.get('/:id', interviewController.getInterview);
 
 // All routes require admin access
 router.use(authController.restrictToAdmin);
@@ -28,7 +28,6 @@ router.route('/')
   .post(interviewController.createInterview);
 
 router.route('/:id')
-  .get(interviewController.getInterview)
   .patch(interviewController.updateInterview)
   .delete(interviewController.deleteInterview);
 

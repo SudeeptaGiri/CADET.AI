@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -95,5 +96,17 @@ accessInterview(accessCode: string, password: string): Observable<any> {
   isAdmin(): boolean {
     const user = this.getCurrentUser();
     return user && user.role === 'admin';
+  }
+
+   getToken(): string | null {
+    return localStorage.getItem('token');
+  }
+
+  getAuthHeaders(): HttpHeaders {
+    const token = this.getToken();
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
   }
 }

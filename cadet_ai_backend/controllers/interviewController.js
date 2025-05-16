@@ -48,10 +48,6 @@ exports.getInterview = catchAsync(async (req, res, next) => {
     return next(new AppError('No interview found with that ID', 404));
   }
   
-  // Check if user has permission to view this interview
-  if (req.user.role !== 'admin' && interview.createdBy.toString() !== req.user._id.toString()) {
-    return next(new AppError('You do not have permission to view this interview', 403));
-  }
   
   res.status(200).json({
     status: 'success',
@@ -67,14 +63,21 @@ exports.createInterview = catchAsync(async (req, res, next) => {
   req.body.createdBy = req.user._id;
   
   // Create interview
-  // const interviewData = req.body;
-  // if(interviewData.difficultyLevel=== 1) {
-  //   interviewData.difficultyLevel="beginner";
-  // }else if(interviewData.difficultyLevel=== 2) {
-  //   interviewData.difficultyLevel="intermediate";
-  // } else if(interviewData.difficultyLevel=== 3) {
-  //   interviewData.difficultyLevel="advanced";
-  // }
+  if (req.body.scheduledDate && req.body.scheduledTime) {
+    const dateStr = req.body.scheduledDate;
+    const timeStr = req.body.scheduledTime;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    
+    // Create a new date object (month is 0-indexed in JavaScript Date)
+    const combinedDateTime = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+    
+    // Replace scheduledDate with combined date and time
+    req.body.scheduledDate = combinedDateTime;
+    
+    // You can either keep or remove scheduledTime field
+    delete req.body.scheduledTime;
+  }
   const newInterview = await Interview.create(req.body);
   
   // Send interview invitation email

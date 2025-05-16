@@ -1,0 +1,198 @@
+<!-- interview-session.component.html -->
+<div class="interview-session-container min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-white">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container flex flex-col items-center justify-center min-h-screen">
+    <div class="spinner-container relative w-20 h-20 mb-6">
+      <div class="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-blue-400 border-b-blue-300 border-l-blue-600 animate-spin"></div>
+      <div class="absolute inset-3 rounded-full border-4 border-t-transparent border-r-transparent border-b-transparent border-l-blue-400 animate-spin animation-delay-500"></div>
+    </div>
+    <p class="text-xl font-medium text-blue-200">Initializing Interview</p>
+    <p class="text-sm text-blue-300 mt-2">Setting up your session</p>
+  </div>
+  
+  <!-- Main Application -->
+  <div *ngIf="!isLoading" class="app-container min-h-screen flex flex-col">
+    <!-- Header with Timer -->
+    <header class="app-header bg-gray-900 border-b border-gray-800 shadow-lg sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="h-10 w-10 rounded-lg bg-blue-900 flex items-center justify-center shadow-lg mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-xl font-bold text-white">{{ interviewTitle }}</h1>
+              <p class="text-sm text-blue-300">{{ currentTopic || 'Technical Assessment' }}</p>
+            </div>
+          </div>
+          
+          <!-- Timer Section -->
+          <div class="timer-section flex items-center">
+            <div class="timer-display flex items-center mr-6" [ngClass]="{'text-red-400': timeRemaining < 300}">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div class="font-mono text-xl font-bold">{{ formatTimeRemaining() }}</div>
+            </div>
+            
+            <!-- Progress Indicator -->
+            <div class="progress-indicator hidden md:flex items-center">
+              <span class="text-sm text-gray-400 mr-2">Question</span>
+              <span class="font-medium text-white">{{ currentQuestionIndex + 1 }}</span>
+              <span class="text-gray-500 mx-1">/</span>
+              <span class="text-gray-400">{{ totalQuestions }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Progress Bar -->
+      <div class="h-1 bg-gray-800 w-full">
+        <div class="h-full bg-blue-600 transition-all duration-500" [style.width.%]="progressPercentage"></div>
+      </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="app-content flex-1 max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Question Section -->
+      <div class="question-section lg:col-span-2">
+        <app-question-view></app-question-view>
+      </div>
+      
+      <!-- Right Sidebar -->
+      <div class="sidebar-section lg:col-span-1 space-y-6">
+        <!-- Answer Input Section -->
+        <div class="answer-section">
+          <app-answer-input></app-answer-input>
+        </div>
+        
+        <!-- Follow-up Section -->
+        <div class="follow-up-section">
+          <app-follow-up></app-follow-up>
+        </div>
+      </div>
+    </main>
+    
+    <!-- Control Bar -->
+    <div class="control-bar bg-gray-900 border-t border-gray-800 py-3 sticky bottom-0">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center">
+            <button 
+              class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-md text-sm flex items-center mr-3 transition-colors"
+              (click)="toggleMute()">
+              <svg *ngIf="!isMuted" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+              <svg *ngIf="isMuted" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+              </svg>
+              {{ isMuted ? 'Unmute' : 'Mute' }}
+            </button>
+            
+            <button 
+              class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-md text-sm flex items-center transition-colors"
+              (click)="toggleFullscreen()">
+              <svg *ngIf="!isFullscreen" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+              </svg>
+              <svg *ngIf="isFullscreen" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              {{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}
+            </button>
+          </div>
+          
+          <div class="flex items-center">
+            <button 
+              *ngIf="!isLastQuestion"
+              class="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-md text-sm flex items-center mr-3 transition-colors"
+              (click)="nextQuestion()">
+              Skip Question
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </button>
+            
+            <button 
+              class="px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white rounded-md text-sm flex items-center transition-colors"
+              (click)="endSession()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              End Interview
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Time's Up Modal -->
+  <div *ngIf="showTimeUpModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+    <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl max-w-md w-full mx-4 animate-bounce-in">
+      <div class="p-6">
+        <div class="flex items-center justify-center mb-4">
+          <div class="h-16 w-16 rounded-full bg-red-900/50 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        
+        <h3 class="text-xl font-bold text-white text-center mb-2">Time's Up!</h3>
+        <p class="text-gray-300 text-center mb-6">The interview session has ended. Thank you for participating.</p>
+        
+        <div class="flex justify-center">
+          <button 
+            class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+            (click)="goToResults()">
+            View Results
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- End Interview Confirmation Modal -->
+  <div *ngIf="showEndSessionModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+    <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
+      <div class="p-6">
+        <div class="flex items-center justify-center mb-4">
+          <div class="h-12 w-12 rounded-full bg-red-900/50 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+        </div>
+        
+        <h3 class="text-lg font-medium text-white text-center mb-2">End Interview Session?</h3>
+        <p class="text-gray-300 text-center mb-6">Are you sure you want to end this interview? Your progress will be saved, but the session will be marked as incomplete.</p>
+        
+        <div class="flex justify-center space-x-4">
+          <button 
+            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+            (click)="cancelEndSession()">
+            Cancel
+          </button>
+          <button 
+            class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+            (click)="confirmEndSession()">
+            End Interview
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Time Warning Modal -->
+  <div *ngIf="showTimeWarning" class="fixed bottom-4 right-4 bg-red-900/90 text-red-100 px-5 py-3 rounded-lg shadow-lg flex items-center animate-pulse-in">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span class="font-medium">5 minutes remaining!</span>
+  </div>
+</div>
