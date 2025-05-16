@@ -1,1 +1,235 @@
-<p>reports works!</p>
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-950 to-indigo-900 font-sans">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center mb-4">
+            <div class="text-cyan-400 mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-white">Interview Reports</h1>
+                <p class="text-blue-300">Manage candidate assessment reports</p>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex space-x-4">
+                <!-- Filter button that opens/closes the filter panel -->
+                <button (click)="showFilters = !showFilters"
+                    class="flex items-center px-3 py-2 rounded-lg bg-blue-900/40 hover:bg-blue-800/60 text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    Filters
+                </button>
+            </div>
+
+            <button (click)="generateNewReport()"
+                class="flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white transition-colors duration-200 shadow-lg shadow-blue-500/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Generate New Report
+            </button>
+        </div>
+
+        <!-- Filter Panel (hidden by default) -->
+        <div *ngIf="showFilters"
+            class="bg-gray-800/70 rounded-xl p-5 border border-white/10 backdrop-blur-md shadow-lg mb-6 animate-fadeIn">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Interview Type Filter -->
+                <div>
+                    <label for="interviewType" class="block text-sm font-medium text-blue-300 mb-1">Interview
+                        Type</label>
+                    <select id="interviewType" name="interviewType" [(ngModel)]="filters.interviewType"
+                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Types</option>
+                        <option *ngFor="let type of interviewTypes" [value]="type">{{ type }}</option>
+                    </select>
+                </div>
+
+                <!-- Candidate Name Filter -->
+                <div>
+                    <label for="candidateName" class="block text-sm font-medium text-blue-300 mb-1">Candidate
+                        Name</label>
+                    <input type="text" id="candidateName" name="candidateName" [(ngModel)]="filters.candidateName"
+                        placeholder="Search by name"
+                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Rating Range Filter -->
+                <div>
+                    <label for="minRating" class="block text-sm font-medium text-blue-300 mb-1">Min Rating</label>
+                    <input type="number" id="minRating" name="minRating" [(ngModel)]="filters.minRating" min="0"
+                        max="10" step="0.5" placeholder="Minimum"
+                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <!-- Date Range Filter -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label for="startDate" class="block text-sm font-medium text-blue-300 mb-1">From Date</label>
+                        <input type="date" id="startDate" name="startDate" [(ngModel)]="filters.startDate"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="endDate" class="block text-sm font-medium text-blue-300 mb-1">To Date</label>
+                        <input type="date" id="endDate" name="endDate" [(ngModel)]="filters.endDate"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end mt-4 space-x-3">
+                <button (click)="resetFilters()"
+                    class="px-3 py-1.5 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors duration-200">
+                    Reset
+                </button>
+                <button (click)="applyFilters(); showFilters = false;"
+                    class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Reports Table -->
+        <div class="bg-gray-800/70 rounded-xl border border-white/10 backdrop-blur-md shadow-lg overflow-hidden">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-900/50">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">Title
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">
+                            Candidate</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">
+                            Generated Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">
+                            Duration</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">
+                            Rating</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-cyan-400 uppercase tracking-wider">
+                            Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    <ng-container *ngIf="!loading && reports.length > 0; else noReports">
+                        <tr *ngFor="let report of reports" class="hover:bg-gray-700/30 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="text-white font-medium">{{ report.interviewId.title || 'Interview Report' }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div
+                                        class="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
+                                        {{ report.candidateId.name ? (report.candidateId.name.split(' ')[0][0] +
+                                        (report.candidateId.name.split(' ')[1] ? report.candidateId.name.split('
+                                        ')[1][0] : '')) : 'U' }}
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-white">{{ report.candidateId.name ||
+                                            'Unknown' }}</div>
+                                        <div class="text-xs text-blue-300">{{ report.candidateId.email || 'No email' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                {{ formatDate(report.createdAt) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                {{ report.interviewId.duration || 60 }} minutes
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span [ngClass]="{
+                      'text-green-500': report.overallRating >= 8,
+                      'text-yellow-500': report.overallRating >= 6 && report.overallRating < 8,
+                      'text-red-500': report.overallRating < 6
+                    }" class="font-semibold">
+                                    {{ report.overallRating.toFixed(1) }}/10
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <div class="flex justify-end space-x-2">
+                                    <a [routerLink]="['/reports', report._id]"
+                                        class="p-2 rounded-lg bg-blue-900/40 hover:bg-blue-800/60 text-blue-300 hover:text-blue-200 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    </a>
+                                    <button (click)="downloadReport(report._id)"
+                                        class="p-2 rounded-lg bg-blue-900/40 hover:bg-blue-800/60 text-blue-300 hover:text-blue-200 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                    </button>
+                                    <!-- <button (click)="deleteReport(report._id)" class="p-2 rounded-lg bg-red-900/40 hover:bg-red-800/60 text-red-300 hover:text-red-200 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button> -->
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-container>
+
+                    <ng-template #noReports>
+                        <tr *ngIf="!loading">
+                            <td colspan="6" class="px-6 py-10 text-center text-gray-400">
+                                <div class="flex flex-col items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-4 text-gray-500"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <p class="text-lg font-medium">No reports found</p>
+                                    <p class="mt-1">Try adjusting your filters or generate new reports</p>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr *ngIf="loading">
+                            <td colspan="6" class="px-6 py-10 text-center text-gray-400">
+                                <div class="flex justify-center">
+                                    <div
+                                        class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500">
+                                    </div>
+                                </div>
+                                <p class="mt-4">Loading reports...</p>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div class="px-6 py-4 flex items-center justify-between border-t border-gray-700" *ngIf="totalPages > 1">
+                <div class="text-sm text-gray-400">
+                    Showing <span class="font-medium">{{ ((filters.page || 1) - 1) * (filters.limit || 10) + 1 }}</span>
+                    to
+                    <span class="font-medium">{{ Math.min((filters.page || 1) * (filters.limit || 10), totalReports)
+                        }}</span> of
+                    <span class="font-medium">{{ totalReports }}</span> results
+                </div>
+                <div class="flex space-x-2">
+                    <button *ngFor="let page of getPageArray()" (click)="changePage(page)"
+                        [ngClass]="{'bg-blue-600 text-white': page === filters.page, 'bg-gray-700 text-gray-300 hover:bg-gray-600': page !== filters.page}"
+                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors">
+                        {{ page }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

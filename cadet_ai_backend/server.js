@@ -105,7 +105,6 @@
 //   process.exit(1);
 // });
 
-
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -114,6 +113,7 @@ const cookieParser = require('cookie-parser');
 const config = require('./config/config');
 const authRoutes = require('./routes/authRoutes');
 const interviewRoutes = require('./routes/interviewRoutes');
+const reportRoutes = require('./routes/reportRoutes'); // Add this line
 
 // Connect to MongoDB
 mongoose
@@ -132,6 +132,7 @@ app.use(cookieParser());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/interviews', interviewRoutes);
+app.use('/api/reports', reportRoutes); // Add this line
 
 // Simple error handler
 app.use((err, req, res, next) => {
