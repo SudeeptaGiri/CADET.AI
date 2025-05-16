@@ -36,18 +36,6 @@ export class AuthService {
   }
 
   // Register admin
-  signup(userData: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/admin/signup`, userData)
-      .pipe(
-        tap(res => {
-          if (res && res.token) {
-            localStorage.setItem('token', res.token);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
-            this.currentUserSubject.next(res.data.user);
-          }
-        })
-      );
-  }
 
 // Access interview as candidate
 accessInterview(accessCode: string, password: string): Observable<any> {

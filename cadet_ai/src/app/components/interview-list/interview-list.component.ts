@@ -35,6 +35,8 @@ export class InterviewListComponent implements OnInit {
   loading: boolean = false;
   selectedInterview: any = null;
   showCredentialsModal: boolean = false;
+  accessCode: string = '';
+  plainPassword: string = '';
 
   constructor(
     private interviewService: ScheduleInterviewService,
@@ -122,7 +124,17 @@ export class InterviewListComponent implements OnInit {
   }
 
   showCredentials(interview: any): void {
-    this.selectedInterview = interview;
+    this.interviewService.getInterviewCredentials(interview.id).subscribe({
+      next: (response) => {
+        console.log('Interview credentials:', response);
+        this.accessCode = response.data.accessCode;
+        this.plainPassword = response.data.accessPassword;
+      },
+      error: (error) => {
+        this.toastr.error(error.error.message || 'Failed to load interview credentials');
+      }
+    });
+    this.selectedInterview = interview; 
     this.showCredentialsModal = true;
   }
 

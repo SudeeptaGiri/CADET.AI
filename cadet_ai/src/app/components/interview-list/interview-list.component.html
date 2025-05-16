@@ -227,11 +227,11 @@
                   <input 
                     type="text" 
                     class="w-full bg-gray-800/50 border border-gray-700 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-l-lg py-2.5 px-4 text-white"
-                    [value]="selectedInterview.accessPasswordPlain" 
+                    [value]="plainPassword" 
                     readonly>
                   <button 
                     class="flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white px-4 rounded-r-lg border-y border-r border-gray-700 transition-colors duration-200"
-                    (click)="copyToClipboard(selectedInterview.accessPasswordPlain)"
+                    (click)="copyToClipboard(plainPassword)"
                     title="Copy to clipboard">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-12a2 2 0 00-2-2h-2M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" />

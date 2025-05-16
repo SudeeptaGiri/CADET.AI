@@ -2,7 +2,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LoginComponent } from './components/login/login.component';
-import { SignupComponent } from './components/signup/signup.component';
 import { InterviewAccessComponent } from './components/interview-access/interview-access.component';
 import { InterviewListComponent } from './components/interview-list/interview-list.component';
 import { ScheduleInterviewComponent } from './components/schedule-interview/schedule-interview.component';
@@ -16,7 +15,6 @@ import { InterviewSessionComponent } from './components/interview-practice/inter
 export const routes: Routes = [
   { path: '', redirectTo: '/access', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
-  { path: 'signup', component: SignupComponent },
   { path: 'access', component: InterviewAccessComponent },
   { 
     path: 'interviews', 

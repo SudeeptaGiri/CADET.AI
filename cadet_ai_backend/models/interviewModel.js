@@ -106,7 +106,7 @@ interviewSchema.index({ scheduledDate: 1 });
 interviewSchema.index({ candidateEmail: 1 });
 interviewSchema.index({ status: 1 });
 interviewSchema.index({ accessCode: 1 });
-
+interviewSchema.index({ accessPasswordPlain: 1 });
 // Virtual property to calculate end time
 interviewSchema.virtual('endTime').get(function() {
   return new Date(this.scheduledDate.getTime() + this.duration * 60000);
