@@ -65,7 +65,7 @@ const interviewSchema = new mongoose.Schema({
   },
   accessCode: {
     type: String,
-    unique: true
+    // unique: true
   },
   accessPassword: {
     type: String,

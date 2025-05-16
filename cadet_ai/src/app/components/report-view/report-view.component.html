@@ -1,1 +1,313 @@
-<p>report-view works!</p>
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-950 to-indigo-900 font-sans">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-6">
+            <a routerLink="/reports" class="flex items-center text-blue-400 hover:text-blue-300 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Reports
+            </a>
+        </div>
+
+        <ng-container *ngIf="loading">
+            <div class="flex justify-center items-center h-64">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="error">
+            <div class="bg-red-900/30 border border-red-500/50 rounded-lg p-4 text-red-400">
+                {{ error }}
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="!loading && !error && report">
+            <!-- Report Header -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+                <h1 class="text-3xl font-bold text-white">{{ report.interviewId.title }}</h1>
+                <button (click)="downloadReport()"
+                    class="mt-4 md:mt-0 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download PDF
+                </button>
+            </div>
+
+            <!-- Candidate and Interview Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gray-800/70 rounded-xl p-6 border border-white/10 backdrop-blur-md shadow-lg">
+                    <h2 class="text-xl font-semibold text-white mb-4">Candidate Information</h2>
+                    <div class="flex items-center mb-4">
+                        <div
+                            class="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-medium text-lg">
+                            {{ report.candidateId.name ? (report.candidateId.name.split(' ')[0][0] +
+                            (report.candidateId.name.split(' ')[1] ? report.candidateId.name.split(' ')[1][0] : '')) :
+                            'U' }}
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-lg font-medium text-white">{{ report.candidateId.name || 'Unknown' }}</div>
+                            <div class="text-sm text-blue-300">{{ report.candidateId.email || 'No email' }}</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2">
+                        <div class="flex justify-between py-2 border-b border-gray-700">
+                            <span class="text-gray-400">Overall Rating</span>
+                            <span [ngClass]="getRatingClass(report.overallRating)" class="font-semibold">{{
+                                report.overallRating.toFixed(1) }}/10</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-700">
+                            <span class="text-gray-400">Sentiment</span>
+                            <span [ngClass]="getSentimentClass(report.behavioralAnalysis.sentiment)"
+                                class="font-semibold">{{ report.behavioralAnalysis.sentiment }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-700">
+                            <span class="text-gray-400">Confidence</span>
+                            <span class="text-white font-semibold">{{ report.behavioralAnalysis.confidence.toFixed(1)
+                                }}/10</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800/70 rounded-xl p-6 border border-white/10 backdrop-blur-md shadow-lg">
+                    <h2 class="text-xl font-semibold text-white mb-4">Interview Details</h2>
+                    <div class="grid grid-cols-1 gap-2">
+                        <div class="flex justify-between py-2 border-b border-gray-700">
+                            <span class="text-gray-400">Interview Type</span>
+                            <span class="text-white">{{ report.interviewId.interviewType }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-700">
+                            <span class="text-gray-400">Duration</span>
+                            <span class="text-white">{{ report.interviewId.duration }} minutes</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-700">
+                            <span class="text-gray-400">Scheduled Date</span>
+                            <span class="text-white">{{ formatDate(report.interviewId.scheduledDate) }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-gray-700">
+                            <span class="text-gray-400">Report Generated</span>
+                            <span class="text-white">{{ formatDate(report.createdAt) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technical Assessment -->
+            <div class="bg-gray-800/70 rounded-xl p-6 border border-white/10 backdrop-blur-md shadow-lg mb-8">
+                <h2 class="text-xl font-semibold text-white mb-4">Technical Assessment</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-cyan-400 mb-3">Skill Ratings</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-white">Implementation</span>
+                                    <span [ngClass]="getRatingClass(report.technicalAssessment.implementationRating)"
+                                        class="text-sm font-medium">
+                                        {{ report.technicalAssessment.implementationRating.toFixed(1) }}/10
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                                    <div class="bg-blue-500 h-2.5 rounded-full"
+                                        [style.width.%]="report.technicalAssessment.implementationRating * 10"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-white">Theoretical Knowledge</span>
+                                    <span [ngClass]="getRatingClass(report.technicalAssessment.theoreticalRating)"
+                                        class="text-sm font-medium">
+                                        {{ report.technicalAssessment.theoreticalRating.toFixed(1) }}/10
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                                    <div class="bg-indigo-500 h-2.5 rounded-full"
+                                        [style.width.%]="report.technicalAssessment.theoreticalRating * 10"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium text-cyan-400 mb-3">Topic Assessment</h3>
+                        <div class="space-y-3">
+                            <div *ngFor="let topic of report.technicalAssessment.topicAssessments"
+                                class="bg-gray-700/50 rounded-lg p-3">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium text-white">{{ topic.topic }}</span>
+                                    <div class="flex items-center">
+                                        <span [ngClass]="getRatingClass(topic.score)"
+                                            class="text-sm font-medium mr-2">{{ topic.score.toFixed(1) }}/10</span>
+                                        <span
+                                            [ngClass]="{'bg-green-900/30 text-green-400': topic.isStrength, 'bg-red-900/30 text-red-400': !topic.isStrength}"
+                                            class="px-2 py-0.5 text-xs rounded-full">
+                                            {{ topic.isStrength ? 'Strength' : 'Weakness' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-300">{{ topic.comments }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Behavioral Analysis -->
+            <div class="bg-gray-800/70 rounded-xl p-6 border border-white/10 backdrop-blur-md shadow-lg mb-8">
+                <h2 class="text-xl font-semibold text-white mb-4">Behavioral Analysis</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-cyan-400 mb-3">Communication Metrics</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-white">Confidence</span>
+                                    <span class="text-sm font-medium text-white">{{
+                                        report.behavioralAnalysis.confidence.toFixed(1) }}/10</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                                    <div class="bg-cyan-500 h-2.5 rounded-full"
+                                        [style.width.%]="report.behavioralAnalysis.confidence * 10"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-white">Articulation Clarity</span>
+                                    <span class="text-sm font-medium text-white">{{
+                                        report.behavioralAnalysis.articulationClarity.toFixed(1) }}/10</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                                    <div class="bg-purple-500 h-2.5 rounded-full"
+                                        [style.width.%]="report.behavioralAnalysis.articulationClarity * 10"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-md font-medium text-white">Filler Word Usage</h4>
+                                <span class="text-sm text-gray-300">{{ report.behavioralAnalysis.fillerWordFrequency }}
+                                    instances</span>
+                            </div>
+                            <div class="bg-gray-700/50 rounded-lg p-3">
+                                <p class="text-sm text-gray-300">
+                                    <ng-container *ngIf="report.behavioralAnalysis.fillerWordFrequency > 20">
+                                        Candidate used filler words frequently, which may indicate nervousness or lack
+                                        of preparation.
+                                    </ng-container>
+                                    <ng-container
+                                        *ngIf="report.behavioralAnalysis.fillerWordFrequency > 10 && report.behavioralAnalysis.fillerWordFrequency <= 20">
+                                        Candidate used filler words occasionally, indicating moderate confidence in
+                                        responses.
+                                    </ng-container>
+                                    <ng-container *ngIf="report.behavioralAnalysis.fillerWordFrequency <= 10">
+                                        Candidate used minimal filler words, demonstrating confident and articulate
+                                        communication.
+                                    </ng-container>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-medium text-cyan-400 mb-3">Sentiment Analysis</h3>
+                        <div class="bg-gray-700/50 rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="font-medium text-white">Overall Sentiment</span>
+                                <span [ngClass]="{
+                      'bg-green-900/30 text-green-400': report.behavioralAnalysis.sentiment === 'Positive',
+                      'bg-yellow-900/30 text-yellow-400': report.behavioralAnalysis.sentiment === 'Neutral',
+                      'bg-red-900/30 text-red-400': report.behavioralAnalysis.sentiment === 'Negative'
+                    }" class="px-2 py-1 text-xs rounded-full">
+                                    {{ report.behavioralAnalysis.sentiment }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-300">
+                                <ng-container *ngIf="report.behavioralAnalysis.sentiment === 'Positive'">
+                                    The candidate displayed positive language and confidence throughout the interview,
+                                    indicating enthusiasm for the role.
+                                </ng-container>
+                                <ng-container *ngIf="report.behavioralAnalysis.sentiment === 'Neutral'">
+                                    The candidate maintained a balanced tone throughout the interview, neither overly
+                                    positive nor negative.
+                                </ng-container>
+                                <ng-container *ngIf="report.behavioralAnalysis.sentiment === 'Negative'">
+                                    The candidate displayed signs of uncertainty or negative language patterns during
+                                    the interview.
+                                </ng-container>
+                            </p>
+                        </div>
+
+                        <h3 class="text-lg font-medium text-cyan-400 mb-3">Integrity Verification</h3>
+                        <div class="bg-gray-700/50 rounded-lg p-4">
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <svg *ngIf="!report.integrityVerification.impersonationDetected"
+                                        xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400 mr-2"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <svg *ngIf="report.integrityVerification.impersonationDetected"
+                                        xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 mr-2" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    <span class="text-sm text-gray-300">
+                                        {{ report.integrityVerification.impersonationDetected ? 'Impersonation detected'
+                                        : 'No impersonation detected' }}
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center">
+                                    <svg *ngIf="report.integrityVerification.conductCompliance"
+                                        xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400 mr-2"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <svg *ngIf="!report.integrityVerification.conductCompliance"
+                                        xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 mr-2" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    <span class="text-sm text-gray-300">
+                                        {{ report.integrityVerification.conductCompliance ? 'Conduct compliance
+                                        verified' : 'Conduct compliance issues detected' }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    *ngIf="report.integrityVerification.anomaliesDetected && report.integrityVerification.anomaliesDetected.length > 0">
+                                    <div class="text-sm text-yellow-400 mt-2 mb-1">Anomalies detected:</div>
+                                    <ul class="list-disc list-inside text-sm text-gray-300 pl-2">
+                                        <li *ngFor="let anomaly of report.integrityVerification.anomaliesDetected">{{
+                                            anomaly }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="bg-gray-800/70 rounded-xl p-6 border border-white/10 backdrop-blur-md shadow-lg">
+                <h2 class="text-xl font-semibold text-white mb-4">Recommendations</h2>
+                <div class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                    <p class="text-gray-300">{{ report.recommendations }}</p>
+                </div>
+            </div>
+        </ng-container>
+    </div>
+</div>
