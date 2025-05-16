@@ -382,7 +382,7 @@ export class InterviewSessionComponent implements OnInit, OnDestroy {
           this.currentQuestionIndex++;
           this.updateQuestionNavigation();
         },
-        error: (error) => {
+        error: (error:any) => {
           console.error('Error skipping question', error);
         }
       });
@@ -425,7 +425,7 @@ export class InterviewSessionComponent implements OnInit, OnDestroy {
             this.router.navigate(['/results']);
           }, 1000);
         },
-        error: (error) => {
+        error: (error:any) => {
           console.error('Error completing session', error);
           this.router.navigate(['/dashboard']);
         }

@@ -32,6 +32,7 @@ export class QuestionViewComponent implements OnInit {
 
   ngOnInit(): void {
     this.sessionService.currentQuestion$.subscribe(question => {
+      console.log('Current question:', question);
       this.question = question;
       this.showAllTestCases = false;
       this.showHints = false;
