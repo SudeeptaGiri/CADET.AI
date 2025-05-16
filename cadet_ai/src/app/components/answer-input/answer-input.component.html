@@ -1,99 +1,122 @@
 <!-- answer-input.component.html -->
-<div class="answer-container" *ngIf="question">
-  <!-- Theoretical Question Answer Section -->
-  <div class="theoretical-answer" *ngIf="question.category === 'Theoretical'">
-    <div class="voice-controls flex items-center space-x-3 mb-4">
-      <button 
-        [class]="isListening ? 
-          'btn-stop flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors' : 
-          'btn-start flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors'"
-        (click)="toggleListening()">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path *ngIf="!isListening" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-          <path *ngIf="isListening" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-        </svg>
-        {{ isListening ? 'Stop Recording' : 'Start Recording' }}
-      </button>
-      
-      <div class="recording-indicator flex items-center" *ngIf="isListening">
-        <div class="h-3 w-3 bg-red-500 rounded-full mr-2 animate-pulse"></div>
-        <span class="text-red-500 font-medium">Recording...</span>
-      </div>
-      
-      <div class="ml-auto text-sm text-gray-400" *ngIf="transcript">
-        {{ transcript.length }} characters
-      </div>
-    </div>
-    
-    <div class="transcript-container">
-      <textarea 
-        class="w-full p-4 bg-gray-800 text-white border border-gray-700 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors resize-none"
-        placeholder="Your answer will appear here as you speak. You can also type directly."
-        [(ngModel)]="transcript"
-        (input)="updateTranscript($event)"
-        [rows]="calculateRows()"
-        [disabled]="isSubmitting"></textarea>
-      
-      <div class="flex justify-between mt-2 text-xs text-gray-400">
-        <div *ngIf="isListening" class="speech-tips">
-          <p>Speak clearly and at a normal pace for best results</p>
-        </div>
-        <div *ngIf="!isListening && transcript.length === 0" class="speech-tips">
-          <p>Click "Start Recording" to answer with your voice</p>
-        </div>
-      </div>
+<div class="answer-container">
+  <!-- Loading state when question is null -->
+  <div *ngIf="!question" class="flex justify-center items-center py-8">
+    <div class="animate-pulse flex flex-col items-center">
+      <div class="h-4 bg-gray-700 rounded w-3/4 mb-4"></div>
+      <div class="h-32 bg-gray-800 rounded w-full mb-2"></div>
+      <div class="h-4 bg-gray-700 rounded w-1/2"></div>
     </div>
   </div>
-  
-  <!-- Coding Question Answer Section -->
-  <div class="coding-answer" *ngIf="question.category === 'Coding'">
-    <div class="code-editor-header flex justify-between items-center mb-2">
-      <div class="flex items-center">
-        <div class="language-indicator px-3 py-1 bg-gray-700 rounded-lg text-sm font-mono text-blue-300">
-          <!-- {{ question.programmingLanguage || 'JavaScript' }} -->
+
+  <!-- Question is loaded -->
+  <ng-container *ngIf="question">
+    <!-- Theoretical Question Answer Section -->
+    <div class="theoretical-answer" *ngIf="question.testCases?.length === 0">
+      <div class="voice-controls flex items-center space-x-3 mb-4">
+        <button 
+          [class]="isListening ? 
+            'btn-stop flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors' : 
+            'btn-start flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors'"
+          (click)="toggleListening()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path *ngIf="!isListening" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            <path *ngIf="isListening" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+          </svg>
+          {{ isListening ? 'Stop Recording' : 'Start Recording' }}
+        </button>
+        
+        <div class="recording-indicator flex items-center" *ngIf="isListening">
+          <div class="h-3 w-3 bg-red-500 rounded-full mr-2 animate-pulse"></div>
+          <span class="text-red-500 font-medium">Recording...</span>
+        </div>
+        
+        <div class="ml-auto text-sm text-gray-400" *ngIf="transcript">
+          {{ transcript.length }} characters
         </div>
       </div>
       
-      <div class="editor-actions flex space-x-2">
-        <button 
-          class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-          title="Format Code"
-          (click)="formatCode()">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-          </svg>
-        </button>
-        <button 
-          class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-          title="Reset Code"
-          (click)="resetCode()">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </button>
+      <div class="transcript-container">
+        <textarea 
+          class="w-full p-4 bg-gray-800 text-white border border-gray-700 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors resize-none"
+          placeholder="Your answer will appear here as you speak. You can also type directly."
+          [(ngModel)]="transcript"
+          (input)="updateTranscript($event)"
+          [rows]="calculateRows()"
+          [disabled]="isSubmitting"></textarea>
+        
+        <div class="flex justify-between mt-2 text-xs text-gray-400">
+          <div *ngIf="isListening" class="speech-tips">
+            <p>Speak clearly and at a normal pace for best results</p>
+          </div>
+          <div *ngIf="!isListening && transcript.length === 0" class="speech-tips">
+            <p>Click "Start Recording" to answer with your voice</p>
+          </div>
+        </div>
       </div>
     </div>
     
-    <div class="code-editor-container">
-      <!-- In a real app, this would be replaced with Monaco Editor -->
-      <textarea 
-        class="w-full p-4 bg-gray-900 text-blue-300 border border-gray-700 rounded-lg font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors resize-none"
-        placeholder="// Write your code here..."
-        [(ngModel)]="codeAnswer"
-        [rows]="15"
-        [disabled]="isSubmitting"></textarea>
-    </div>
-    
-    <div class="flex justify-between mt-2">
-      <div class="text-xs text-gray-400">
-        <!-- <span *ngIf="question.programmingLanguage">Language: {{ question.programmingLanguage }}</span> -->
+    <!-- Coding Question Answer Section -->
+    <div class="coding-answer" *ngIf="question.testCases?.length !== 0">
+      <div class="code-editor-header flex justify-between items-center mb-2">
+        <div class="flex items-center">
+          <div class="language-indicator px-3 py-1 bg-gray-700 rounded-lg text-sm font-mono text-blue-300">
+            <!-- {{ question.programmingLanguage || 'JavaScript' }} -->
+          </div>
+        </div>
+        
+        <div class="editor-actions flex space-x-2">
+          <button 
+            class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            title="Format Code"
+            (click)="formatCode()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+          </button>
+          <button 
+            class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            title="Reset Code"
+            (click)="resetCode()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
       </div>
       
-      <div class="text-xs text-gray-400">
-        {{ codeAnswer.length }} characters
+      <div class="code-editor-container">
+        <textarea 
+          class="w-full p-4 bg-gray-900 text-blue-300 border border-gray-700 rounded-lg font-mono text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors resize-none"
+          placeholder="// Write your code here..."
+          [(ngModel)]="codeAnswer"
+          [rows]="15"
+          [disabled]="isSubmitting"></textarea>
+      </div>
+      
+      <div class="flex justify-between mt-2">
+        <div class="text-xs text-gray-400">
+          <!-- <span *ngIf="question.programmingLanguage">Language: {{ question.programmingLanguage }}</span> -->
+        </div>
+        
+        <div class="text-xs text-gray-400">
+          {{ codeAnswer.length }} characters
+        </div>
       </div>
     </div>
-  </div>
+    
+    <!-- Default Answer Section (fallback if category is missing) -->
+    <div class="default-answer" *ngIf="question && !question.category">
+      <div class="transcript-container">
+        <textarea 
+          class="w-full p-4 bg-gray-800 text-white border border-gray-700 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors resize-none"
+          placeholder="Type your answer here..."
+          [(ngModel)]="transcript"
+          [rows]="calculateRows()"
+          [disabled]="isSubmitting"></textarea>
+      </div>
+    </div>
+  </ng-container>
   
   <!-- Answer Actions -->
   <div class="answer-actions mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">

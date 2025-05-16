@@ -33,15 +33,41 @@ export class AnswerInputComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    // Log the initial state
+    console.log('AnswerInputComponent initialized');
+    
+    // Subscribe to current question changes
     this.subscriptions.push(
       this.sessionService.currentQuestion$.subscribe(question => {
+        console.log('Current question:', question);
+        
+        // Set question and reset inputs
         this.question = question;
+        
+        // If question is null, try to get it directly from the service
+        if (!this.question) {
+          const currentQuestion = this.sessionService.getCurrentQuestion();
+          console.log('Trying to get question directly:', currentQuestion);
+          if (currentQuestion) {
+            this.question = currentQuestion;
+          }
+        }
+        
+        // Apply default category if missing
+        if (this.question && !this.question.category) {
+          console.log('Question missing category, defaulting to Theoretical');
+          this.question = {
+            ...this.question,
+            category: 'Theoretical'
+          };
+        }
+        
         this.resetInputs();
         
         // Set default code template if provided with the question
-        // if (question && question.category === 'Coding' && question.codeTemplate) {
-        //   this.codeAnswer = question.codeTemplate;
-        //   this.originalCode = question.codeTemplate;
+        // if (this.question && this.question.category === 'Coding' && this.question.codeTemplate) {
+        //   this.codeAnswer = this.question.codeTemplate;
+        //   this.originalCode = this.question.codeTemplate;
         // }
       }),
       
@@ -53,6 +79,25 @@ export class AnswerInputComponent implements OnInit, OnDestroy {
         this.isListening = isListening;
       })
     );
+    
+    // If we don't have a question yet, try to get it from the session service
+    if (!this.question) {
+      const currentQuestion = this.sessionService.getCurrentQuestion();
+      console.log('Initial question check:', currentQuestion);
+      if (currentQuestion) {
+        this.question = currentQuestion;
+        
+        // Apply default category if missing
+        if (!this.question.category) {
+          this.question = {
+            ...this.question,
+            category: 'Theoretical'
+          };
+        }
+      } else {
+        console.log('No current question available');
+      }
+    }
   }
 
   ngOnDestroy(): void {
@@ -118,15 +163,29 @@ export class AnswerInputComponent implements OnInit, OnDestroy {
   }
 
   isAnswerEmpty(): boolean {
-    if (this.question?.category === 'Theoretical') {
+    if (!this.question) return true;
+    
+    if (this.question.category === 'Theoretical') {
       return !this.transcript.trim();
-    } else {
+    } else if (this.question.category === 'Coding') {
       return !this.codeAnswer.trim();
     }
+    
+    // Default case
+    return !this.transcript.trim();
   }
 
   submitAnswer(): void {
-    if (!this.question || !this.sessionService.getCurrentSession()) return;
+    if (!this.question) {
+      this.showFeedback('No question available to answer', 'error');
+      return;
+    }
+    
+    const session = this.sessionService.getCurrentSession();
+    if (!session || !session._id) {
+      this.showFeedback('No active session found', 'error');
+      return;
+    }
     
     if (this.isAnswerEmpty()) {
       this.showFeedback('Please provide an answer before submitting', 'error');
@@ -136,12 +195,19 @@ export class AnswerInputComponent implements OnInit, OnDestroy {
     this.isSubmitting = true;
     this.clearFeedback();
     
-    const sessionId = this.sessionService.getCurrentSession()?._id || '';
-    const answer = this.question.category === 'Theoretical' ? this.transcript : this.codeAnswer;
+    const sessionId = session._id;
+    const answer = this.question.category === 'Coding' ? this.codeAnswer : this.transcript;
     
     // For coding questions, we would need to evaluate the code
     // Here we're just assuming it's correct for simplicity
     const isCorrect = this.question.category === 'Coding' ? true : undefined;
+    
+    console.log('Submitting answer:', {
+      questionId: this.question._id,
+      sessionId,
+      answerLength: answer.length,
+      category: this.question.category
+    });
     
     this.questionService.submitAnswer({
       questionId: this.question._id,
@@ -150,6 +216,7 @@ export class AnswerInputComponent implements OnInit, OnDestroy {
       isCorrect
     }).subscribe({
       next: (response) => {
+        console.log('Answer submitted successfully:', response);
         this.isSubmitting = false;
         this.showFeedback('Answer submitted successfully', 'success');
         
@@ -176,12 +243,26 @@ export class AnswerInputComponent implements OnInit, OnDestroy {
   }
 
   skipQuestion(): void {
-    if (!this.question || !this.sessionService.getCurrentSession()) return;
+    if (!this.question) {
+      this.showFeedback('No question available to skip', 'error');
+      return;
+    }
+    
+    const session = this.sessionService.getCurrentSession();
+    if (!session || !session._id) {
+      this.showFeedback('No active session found', 'error');
+      return;
+    }
     
     this.isSubmitting = true;
     this.clearFeedback();
     
-    const sessionId = this.sessionService.getCurrentSession()?._id || "";
+    const sessionId = session._id;
+    
+    console.log('Skipping question:', {
+      questionId: this.question._id,
+      sessionId
+    });
     
     this.questionService.submitAnswer({
       questionId: this.question._id,
@@ -190,6 +271,7 @@ export class AnswerInputComponent implements OnInit, OnDestroy {
       isCorrect: false
     }).subscribe({
       next: (response) => {
+        console.log('Question skipped successfully:', response);
         this.isSubmitting = false;
         
         if (response.session) {
