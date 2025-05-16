@@ -129,3 +129,47 @@ exports.getInterviewSessions = async (req, res) => {
     res.status(500).json({ message: 'Error fetching interview sessions', error: error.message });
   }
 };
+
+exports.completeSession = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find the session
+    const session = await Session.findById(id);
+    if (!session) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
+    
+    // Mark as completed
+    session.status = 'completed';
+    await session.save();
+    
+    res.status(200).json(session);
+  } catch (error) {
+    console.error('Error completing session:', error);
+    res.status(500).json({ message: 'Error completing session', error: error.message });
+  }
+};
+
+exports.updateSession = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    // Find and update the session
+    const session = await Session.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true, runValidators: true }
+    );
+    
+    if (!session) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
+    
+    res.status(200).json(session);
+  } catch (error) {
+    console.error('Error updating session:', error);
+    res.status(500).json({ message: 'Error updating session', error: error.message });
+  }
+};

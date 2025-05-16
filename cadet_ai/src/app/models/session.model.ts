@@ -13,7 +13,9 @@ export interface Session {
   currentDifficulty: 'Easy' | 'Medium' | 'Hard';
   questionCount: number;
   topicFailures: number;
+  currentQuestionId?: string; // Added this field
   answeredQuestions: AnsweredQuestion[];
+  skippedQuestions?: string[]; // Added this field
+  status?: 'active' | 'completed' | 'abandoned'; // Added this field
   createdAt: Date;
-  skippedQuestions?: string[];
 }

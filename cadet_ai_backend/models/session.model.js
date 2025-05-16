@@ -1,3 +1,4 @@
+// models/session.model.js
 const mongoose = require('mongoose');
 
 const SessionSchema = new mongoose.Schema({
@@ -17,6 +18,10 @@ const SessionSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: ['Easy', 'Medium', 'Hard']
+  },
+  currentQuestionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Question'
   },
   questionCount: {
     type: Number,
@@ -38,6 +43,15 @@ const SessionSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  skippedQuestions: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Question'
+  }],
+  status: {
+    type: String,
+    enum: ['active', 'completed', 'abandoned'],
+    default: 'active'
+  },
   createdAt: {
     type: Date,
     default: Date.now

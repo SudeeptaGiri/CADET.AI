@@ -103,9 +103,11 @@ exports.getQuestionById = async (req, res) => {
 };
 
 // Submit answer and get next question
+// Modify your existing submitAnswer method in question.controller.js
+
 exports.submitAnswer = async (req, res) => {
   try {
-    const { questionId, answer, sessionId } = req.body;
+    const { questionId, answer, sessionId, isCorrect } = req.body;
     const token = req.headers.authorization;
     
     // Find the question
@@ -121,41 +123,33 @@ exports.submitAnswer = async (req, res) => {
     }
     
     // Get interview details to access topics
-    const interviewResponse = await getInterviewDetails(session.interviewId, token);
-    const interview = interviewResponse.data.interview;
+    const interview = await getInterviewDetails(session.interviewId, token);
     
-    // Evaluate the answer
-    let isCorrect = false;
-    let nextQuestion = null;
-    
-    if (question.category === 'Theoretical' || question.category.toLowerCase() === 'general') {
-      // For theoretical questions, check if answer contains keywords
-      isCorrect = question.keywords && question.keywords.some(keyword => 
-        answer.toLowerCase().includes(keyword.toLowerCase())
-      );
-    } else {
-      // For coding questions, assume evaluation is done client-side for now
-      isCorrect = req.body.isCorrect || false;
+    // Evaluate the answer if not provided
+    let answerIsCorrect = isCorrect;
+    if (answerIsCorrect === undefined) {
+      if (question.category === 'Theoretical') {
+        // For theoretical questions, check if answer contains keywords
+        answerIsCorrect = question.keywords.some(keyword => 
+          answer.toLowerCase().includes(keyword.toLowerCase())
+        );
+      } else {
+        // For coding questions, assume evaluation is done client-side
+        answerIsCorrect = false;
+      }
     }
     
     // Update session with answer
     session.answeredQuestions.push({
       questionId: question._id,
-      correct: isCorrect,
+      correct: answerIsCorrect,
       userAnswer: answer
     });
     
     session.questionCount++;
     
-    // Get answered question IDs for exclusion
-    const answeredIds = session.answeredQuestions.map(q => q.questionId);
-    
-    // Make sure current topic exists in the database
-    const validTopic = await findMatchingTopic(session.currentTopic);
-    session.currentTopic = validTopic;
-    
     // Logic for next question
-    if (isCorrect) {
+    if (answerIsCorrect) {
       // If correct, increase difficulty if possible
       if (session.currentDifficulty === 'Easy') {
         session.currentDifficulty = 'Medium';
@@ -165,107 +159,92 @@ exports.submitAnswer = async (req, res) => {
       
       // Reset topic failures
       session.topicFailures = 0;
-      
-      // Check if there are follow-ups
-      if (question.followUps && question.followUps.length > 0) {
-        nextQuestion = await Question.findById(question.followUps[0]);
-      }
-      
-      // If no follow-up found, get a new question
-      if (!nextQuestion) {
-        // Try to get a question with the same topic and higher difficulty
-        nextQuestion = await Question.findOne({
-          topic: validTopic,
-          difficulty: session.currentDifficulty,
-          _id: { $nin: answeredIds }
-        });
-        
-        console.log(`Looking for next question with topic: ${validTopic}, difficulty: ${session.currentDifficulty}`);
-      }
     } else {
       // If incorrect, increment failures
       session.topicFailures++;
       
       // If too many failures, switch topic
-      if (session.topicFailures >= 3 && interview.topics && interview.topics.length > 1) {
+      if (session.topicFailures >= 3) {
         // Get next topic from interview topics
-        const currentIndex = interview.topics.indexOf(session.currentTopic);
-        const nextIndex = (currentIndex + 1) % interview.topics.length;
-        const nextTopic = interview.topics[nextIndex];
-        
-        // Make sure next topic exists in the database
-        session.currentTopic = await findMatchingTopic(nextTopic);
+        const interviewTopics = interview?.data?.interview?.topics || [];
+        if (interviewTopics.length > 0) {
+          const currentIndex = interviewTopics.indexOf(session.currentTopic);
+          const nextIndex = (currentIndex + 1) % interviewTopics.length;
+          session.currentTopic = interviewTopics[nextIndex];
+        }
         session.topicFailures = 0;
-        session.currentDifficulty = mapDifficulty(interview.difficulty);
-        
-        console.log(`Switching to topic: ${session.currentTopic}, difficulty: ${session.currentDifficulty}`);
-      }
-      
-      // Try a different question from the same topic and difficulty
-      nextQuestion = await Question.findOne({
-        topic: session.currentTopic,
-        difficulty: session.currentDifficulty,
-        _id: { $nin: answeredIds }
-      });
-    }
-    
-    // If no question found, try with any difficulty for the same topic
-    if (!nextQuestion) {
-      console.log(`No question found with specific difficulty. Trying any difficulty for topic: ${session.currentTopic}`);
-      nextQuestion = await Question.findOne({
-        topic: session.currentTopic,
-        _id: { $nin: answeredIds }
-      });
-    }
-    
-    // If still no question, try case-insensitive search
-    if (!nextQuestion) {
-      console.log(`No question found with exact topic. Trying case-insensitive search for: ${session.currentTopic}`);
-      nextQuestion = await Question.findOne({
-        topic: { $regex: new RegExp(session.currentTopic, 'i') },
-        _id: { $nin: answeredIds }
-      });
-    }
-    
-    // If still no question, move to next topic or get any available question
-    if (!nextQuestion) {
-      console.log('No question found for current topic. Getting any available question.');
-      
-      // Try to get any question that hasn't been answered
-      nextQuestion = await Question.findOne({
-        _id: { $nin: answeredIds }
-      });
-      
-      // If found, update session topic to match the question
-      if (nextQuestion) {
-        session.currentTopic = nextQuestion.topic;
-        session.currentDifficulty = nextQuestion.difficulty;
-        console.log(`Switched to available question topic: ${session.currentTopic}`);
-      }
-    }
-    
-    // Last resort: if all questions have been answered, allow repeating a question
-    if (!nextQuestion) {
-      console.log('All questions have been answered. Allowing a repeat question.');
-      nextQuestion = await Question.findOne({});
-      if (nextQuestion) {
-        session.currentTopic = nextQuestion.topic;
-        session.currentDifficulty = nextQuestion.difficulty;
+        session.currentDifficulty = mapDifficulty(interview?.data?.interview?.difficulty || 'Medium');
       }
     }
     
     await session.save();
     
+    // Get next question
+    // Get answered question IDs to exclude them
+    const answeredQuestionIds = session.answeredQuestions.map(q => q.questionId);
+    const skippedQuestionIds = session.skippedQuestions || [];
+    const excludedQuestionIds = [...answeredQuestionIds, ...skippedQuestionIds];
+    
+    // Try to find a question in the same topic that hasn't been answered
+    let nextQuestion = await Question.findOne({
+      topic: session.currentTopic,
+      difficulty: session.currentDifficulty,
+      _id: { $nin: excludedQuestionIds }
+    });
+    
+    // If no question found, try with any difficulty in the same topic
     if (!nextQuestion) {
-      return res.status(404).json({ 
-        message: 'No questions available. Please add more questions to the database.',
-        isCorrect,
-        session
+      nextQuestion = await Question.findOne({
+        topic: session.currentTopic,
+        _id: { $nin: excludedQuestionIds }
       });
     }
     
+    // If still no question, try case-insensitive search
+    if (!nextQuestion) {
+      nextQuestion = await Question.findOne({
+        topic: { $regex: new RegExp(session.currentTopic, 'i') },
+        _id: { $nin: excludedQuestionIds }
+      });
+    }
+    
+    // If still no question, switch to next topic
+    if (!nextQuestion) {
+      const interviewTopics = interview?.data?.interview?.topics || [];
+      
+      if (interviewTopics.length > 0) {
+        const currentIndex = interviewTopics.indexOf(session.currentTopic);
+        const nextIndex = (currentIndex + 1) % interviewTopics.length;
+        session.currentTopic = interviewTopics[nextIndex];
+        
+        // Try to find a question in the new topic
+        nextQuestion = await Question.findOne({
+          topic: session.currentTopic,
+          _id: { $nin: excludedQuestionIds }
+        });
+      }
+    }
+    
+    // Last resort: get any unanswered question
+    if (!nextQuestion) {
+      nextQuestion = await Question.findOne({
+        _id: { $nin: excludedQuestionIds }
+      });
+    }
+    
+    // If we've exhausted all questions, start reusing them
+    if (!nextQuestion) {
+      nextQuestion = await Question.findOne({});
+    }
+    
+    // Update session with current question ID
+    if (nextQuestion) {
+      session.currentQuestionId = nextQuestion._id;
+      await session.save();
+    }
+    
     res.status(200).json({
-      isCorrect,
+      isCorrect: answerIsCorrect,
       nextQuestion,
       session
     });
@@ -365,5 +344,174 @@ exports.getNextTopic = async (req, res) => {
   } catch (error) {
     console.error('Error in getNextTopic:', error);
     res.status(500).json({ message: 'Error switching topics', error: error.message });
+  }
+};
+
+/**
+ * Get the first question for a session
+ */
+exports.getFirstQuestion = async (req, res) => {
+  try {
+    const { sessionId } = req.query;
+    
+    if (!sessionId) {
+      return res.status(400).json({ message: 'Session ID is required' });
+    }
+    
+    // Find the session
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
+    
+    // Get interview details to access topics and difficulty
+    const token = req.headers.authorization;
+    const interview = await getInterviewDetails(session.interviewId, token);
+    const interviewTopics = interview?.data?.interview?.topics || [];
+    
+    // Determine the topic to use
+    let topic = session.currentTopic;
+    if (!topic && interviewTopics.length > 0) {
+      topic = interviewTopics[0];
+      session.currentTopic = topic;
+    }
+    
+    // Determine the difficulty
+    const difficulty = session.currentDifficulty || 
+      mapDifficulty(interview?.data?.interview?.difficulty || 'Medium');
+    
+    // Find a question matching the topic and difficulty
+    let question = await Question.findOne({
+      topic: topic,
+      difficulty: difficulty
+    });
+    
+    // If no exact match, try with just the topic
+    if (!question && topic) {
+      question = await Question.findOne({ topic: topic });
+    }
+    
+    // If still no match, try case-insensitive search
+    if (!question && topic) {
+      question = await Question.findOne({ 
+        topic: { $regex: new RegExp(topic, 'i') }
+      });
+    }
+    
+    // Last resort: get any question
+    if (!question) {
+      question = await Question.findOne({});
+      
+      // Update session with the topic from the found question
+      if (question) {
+        session.currentTopic = question.topic;
+      }
+    }
+    
+    if (!question) {
+      return res.status(404).json({ message: 'No questions available' });
+    }
+    
+    // Update session with current question ID
+    session.currentQuestionId = question._id;
+    await session.save();
+    
+    res.status(200).json(question);
+  } catch (error) {
+    console.error('Error in getFirstQuestion:', error);
+    res.status(500).json({ message: 'Error fetching question', error: error.message });
+  }
+};
+
+/**
+ * Get the next question for a session
+ */
+exports.getNextQuestion = async (req, res) => {
+  try {
+    const { sessionId } = req.query;
+    
+    if (!sessionId) {
+      return res.status(400).json({ message: 'Session ID is required' });
+    }
+    
+    // Find the session
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
+    
+    // Get interview details
+    const token = req.headers.authorization;
+    const interview = await getInterviewDetails(session.interviewId, token);
+    
+    // Get answered question IDs to exclude them
+    const answeredQuestionIds = session.answeredQuestions.map(q => q.questionId);
+    const skippedQuestionIds = session.skippedQuestions || [];
+    const excludedQuestionIds = [...answeredQuestionIds, ...skippedQuestionIds];
+    
+    // Try to find a question in the same topic that hasn't been answered
+    let nextQuestion = await Question.findOne({
+      topic: session.currentTopic,
+      difficulty: session.currentDifficulty,
+      _id: { $nin: excludedQuestionIds }
+    });
+    
+    // If no question found, try with any difficulty in the same topic
+    if (!nextQuestion) {
+      nextQuestion = await Question.findOne({
+        topic: session.currentTopic,
+        _id: { $nin: excludedQuestionIds }
+      });
+    }
+    
+    // If still no question, try case-insensitive search
+    if (!nextQuestion) {
+      nextQuestion = await Question.findOne({
+        topic: { $regex: new RegExp(session.currentTopic, 'i') },
+        _id: { $nin: excludedQuestionIds }
+      });
+    }
+    
+    // If still no question, switch to next topic
+    if (!nextQuestion) {
+      const interviewTopics = interview?.data?.interview?.topics || [];
+      
+      if (interviewTopics.length > 0) {
+        const currentIndex = interviewTopics.indexOf(session.currentTopic);
+        const nextIndex = (currentIndex + 1) % interviewTopics.length;
+        session.currentTopic = interviewTopics[nextIndex];
+        
+        // Try to find a question in the new topic
+        nextQuestion = await Question.findOne({
+          topic: session.currentTopic,
+          _id: { $nin: excludedQuestionIds }
+        });
+      }
+    }
+    
+    // Last resort: get any unanswered question
+    if (!nextQuestion) {
+      nextQuestion = await Question.findOne({
+        _id: { $nin: excludedQuestionIds }
+      });
+    }
+    
+    // If we've exhausted all questions, start reusing them
+    if (!nextQuestion) {
+      nextQuestion = await Question.findOne({});
+    }
+    
+    if (!nextQuestion) {
+      return res.status(404).json({ message: 'No more questions available' });
+    }
+    
+    // Update session with current question ID
+    session.currentQuestionId = nextQuestion._id;
+    await session.save();
+    
+    res.status(200).json(nextQuestion);
+  } catch (error) {
+    console.error('Error in getNextQuestion:', error);
+    res.status(500).json({ message: 'Error fetching next question', error: error.message });
   }
 };
