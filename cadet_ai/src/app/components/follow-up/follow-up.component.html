@@ -1,0 +1,105 @@
+<!-- follow-up.component.html -->
+<div class="follow-up-container" *ngIf="followUpQuestions.length > 0">
+  <div class="follow-up-header flex items-center mb-4">
+    <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg mr-3">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+    <h3 class="text-xl font-semibold text-white">Follow-up Questions</h3>
+    <div class="ml-auto text-sm text-gray-400">{{ followUpQuestions.length }} available</div>
+  </div>
+  
+  <div class="follow-up-list space-y-3">
+    <div 
+      *ngFor="let followUp of followUpQuestions; let i = index"
+      class="follow-up-item group cursor-pointer bg-gray-800/50 hover:bg-gray-700/70 border border-gray-700 hover:border-indigo-500/50 rounded-lg p-4 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-lg"
+      [class.selected]="isSelected(followUp)"
+      (click)="selectFollowUp(followUp)"
+      [style.animation-delay]="i * 100 + 'ms'">
+      
+      <div class="flex items-start">
+        <div class="flex-shrink-0 mt-1">
+          <div class="w-6 h-6 rounded-full bg-indigo-600/30 flex items-center justify-center">
+            <span class="text-xs font-medium text-indigo-400">{{ i + 1 }}</span>
+          </div>
+        </div>
+        
+        <div class="ml-3 flex-1">
+          <div class="follow-up-text text-white font-medium mb-2">{{ followUp.questionText }}</div>
+          
+          <div class="follow-up-meta flex flex-wrap items-center gap-2">
+            <span class="badge px-2 py-1 text-xs rounded-md font-medium"
+                  >
+              {{ followUp.difficulty || 'Unknown' }} Difficulty
+            </span>
+            
+            <span *ngIf="followUp.category" class="badge px-2 py-1 bg-blue-900/50 text-blue-400 border border-blue-500/30 text-xs rounded-md font-medium">
+              {{ followUp.category }}
+            </span>
+            
+            <!-- <span *ngIf="followUp.estimatedTime" class="badge px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded-md font-medium flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {{ followUp.estimatedTime }} min
+            </span> -->
+          </div>
+        </div>
+        
+        <div class="flex-shrink-0 ml-2">
+          <div class="w-8 h-8 rounded-full bg-gray-700/50 group-hover:bg-indigo-600/50 flex items-center justify-center transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Preview of the question (optional, can be toggled) -->
+      <div *ngIf="expandedQuestions[followUp._id]" class="mt-3 pt-3 border-t border-gray-700/50">
+        <div class="text-sm text-gray-300">
+          <!-- <p *ngIf="followUp.description">{{ followUp.description }}</p> -->
+          <!-- <p *ngIf="!followUp.description" class="text-gray-400 italic">No additional details available for this follow-up question.</p> -->
+        </div>
+      </div>
+      
+      <!-- Expand/Collapse button -->
+      <div class="mt-2 flex justify-end">
+        <button 
+          class="text-xs text-gray-400 hover:text-indigo-400 flex items-center focus:outline-none"
+          (click)="toggleExpand(followUp._id, $event)">
+          <span>{{ expandedQuestions[followUp._id] ? 'Hide details' : 'Show details' }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+               [ngClass]="{'transform rotate-180': expandedQuestions[followUp._id]}">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Empty state for when follow-ups are loading -->
+  <div *ngIf="isLoading" class="follow-up-loading py-8 flex flex-col items-center justify-center">
+    <div class="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+    <p class="text-gray-400">Loading follow-up questions...</p>
+  </div>
+  
+  <!-- Error state -->
+  <div *ngIf="loadError" class="follow-up-error py-6 px-4 bg-red-900/30 border border-red-500/30 rounded-lg">
+    <div class="flex items-start">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <div>
+        <p class="text-red-200 font-medium">Failed to load follow-up questions</p>
+        <p class="text-red-300 text-sm mt-1">{{ loadError }}</p>
+        <button 
+          class="mt-2 px-3 py-1 bg-red-800 hover:bg-red-700 text-white text-sm rounded-md transition-colors"
+          (click)="retryLoadFollowUps()">
+          Try Again
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

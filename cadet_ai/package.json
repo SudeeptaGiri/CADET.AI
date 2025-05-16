@@ -23,6 +23,7 @@
     "file-saver": "^2.0.5",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
+    "monaco-editor": "^0.52.2",
     "ngx-toaster": "^1.0.1",
     "ngx-toastr": "^19.0.0",
     "postcss": "^8.5.3",

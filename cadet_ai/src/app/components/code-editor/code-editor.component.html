@@ -1,0 +1,124 @@
+<!-- code-editor.component.html -->
+<div class="code-editor-wrapper">
+  <!-- Editor Header -->
+  <div class="editor-header flex justify-between items-center mb-2 p-2 bg-gray-800 rounded-t-lg border-b border-gray-700">
+    <div class="flex items-center space-x-3">
+      <select 
+        class="bg-gray-700 text-white rounded-md px-3 py-1.5 text-sm border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        [ngModel]="selectedLanguage"
+        (change)="changeLanguage($event)">
+        <option *ngFor="let lang of languageOptions" [value]="lang.id">{{ lang.name }}</option>
+      </select>
+      
+      <button 
+        class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+        title="Format Code"
+        (click)="formatCode()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+        </svg>
+      </button>
+      
+      <button 
+        class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+        title="Reset Code"
+        (click)="resetCode()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+    </div>
+    
+    <div class="flex space-x-2">
+      <button 
+        class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+        (click)="runCode()"
+        [disabled]="isRunning">
+        <svg *ngIf="isRunning" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <svg *ngIf="!isRunning" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {{ isRunning ? 'Running...' : 'Run Code' }}
+      </button>
+      
+      <button 
+        class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+        (click)="submitCode()"
+        [disabled]="isSubmitting">
+        <svg *ngIf="isSubmitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <svg *ngIf="!isSubmitting" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {{ isSubmitting ? 'Submitting...' : 'Submit Solution' }}
+      </button>
+    </div>
+  </div>
+  
+  <!-- Monaco Editor Container -->
+  <div #editorContainer class="monaco-editor-container" style="height: 400px; border: 1px solid #333; border-top: none;"></div>
+  
+  <!-- Test Results & Console Output -->
+  <div class="results-panel mt-4" *ngIf="testResults.length > 0 || consoleOutput">
+    <div class="flex justify-between items-center mb-2">
+      <h3 class="text-lg font-medium text-white">
+        Test Results
+        <span *ngIf="allTestsPassed()" class="ml-2 text-sm bg-green-600 text-white px-2 py-0.5 rounded-full">
+          All Passed
+        </span>
+      </h3>
+      
+      <button 
+        class="text-gray-400 hover:text-white"
+        (click)="toggleConsole()">
+        {{ showConsole ? 'Hide' : 'Show' }} Console
+      </button>
+    </div>
+    
+    <!-- Test Cases Results -->
+    <div class="test-results mb-4">
+      <div *ngFor="let test of testResults; let i = index" 
+           class="test-case p-3 mb-2 rounded-lg" 
+           [ngClass]="test.passed ? 'bg-green-900/30 border border-green-700/30' : 'bg-red-900/30 border border-red-700/30'">
+        <div class="flex justify-between items-start">
+          <div class="flex items-center">
+            <div class="test-status mr-3">
+              <svg *ngIf="test.passed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <svg *ngIf="!test.passed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-medium" [ngClass]="test.passed ? 'text-green-300' : 'text-red-300'">
+                Test Case {{ i + 1 }}
+              </h4>
+              <div class="text-sm text-gray-400 mt-1">
+                <div><span class="font-mono">Input:</span> {{ test.input }}</div>
+                <div><span class="font-mono">Expected:</span> {{ test.expected }}</div>
+                <div *ngIf="!test.passed"><span class="font-mono text-red-400">Actual:</span> {{ test.actual }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="test-time text-xs text-gray-500">
+            {{ test.executionTime }}ms
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Console Output -->
+    <div class="console-output" *ngIf="showConsole && consoleOutput">
+      <h3 class="text-sm font-medium text-gray-400 mb-1">Console Output</h3>
+      <pre class="bg-gray-900 p-3 rounded-lg text-gray-300 font-mono text-sm overflow-x-auto max-h-40">{{ consoleOutput }}</pre>
+    </div>
+  </div>
+</div>

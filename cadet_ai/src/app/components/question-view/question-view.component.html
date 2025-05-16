@@ -1,0 +1,235 @@
+<!-- question-view.component.html -->
+<div class="question-container backdrop-blur-sm bg-gray-800/60 border border-gray-700 rounded-xl shadow-xl p-6 animate-fade-in" *ngIf="question">
+  <!-- Question Header with Badges -->
+  <div class="question-header flex flex-wrap gap-2 mb-4">
+    <span *ngIf="question.topic" class="badge topic-badge px-3 py-1 bg-blue-900/70 text-blue-300 border border-blue-500/30 rounded-full text-xs font-medium flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+      </svg>
+      {{ question.topic }}
+    </span>
+    
+    <span class="badge difficulty-badge px-3 py-1 rounded-full text-xs font-medium flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+      {{ question.difficulty || 'Unknown' }} Difficulty
+    </span>
+    
+    <span class="badge category-badge px-3 py-1 rounded-full text-xs font-medium flex items-center"
+          [ngClass]="{
+            'bg-purple-900/70 text-purple-300 border border-purple-500/30': question.category === 'Theoretical',
+            'bg-cyan-900/70 text-cyan-300 border border-cyan-500/30': question.category === 'Coding',
+            'bg-gray-700 text-gray-300 border border-gray-500/30': !question.category
+          }">
+      <svg *ngIf="question.category === 'Theoretical'" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <svg *ngIf="question.category === 'Coding'" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+      </svg>
+      {{ question.category || 'General' }}
+    </span>
+    
+    <!-- <span *ngIf="question.estimatedTime" class="badge time-badge px-3 py-1 bg-gray-700 text-gray-300 border border-gray-600/30 rounded-full text-xs font-medium flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      {{ question.estimatedTime }} min
+    </span> -->
+  </div>
+  
+  <!-- Question Text -->
+  <div class="question-text mb-6">
+    <h3 class="text-xl font-semibold text-white mb-3">{{ question.questionText }}</h3>
+    
+    <!-- <div *ngIf="question.description" class="description text-gray-300 prose prose-sm prose-invert max-w-none" [innerHTML]="formatDescription(question.description)"></div> -->
+  </div>
+  
+  <!-- Code Example (if available) -->
+  <!-- <div *ngIf="question.codeExample" class="code-example mb-6 bg-gray-900/80 border border-gray-700 rounded-lg p-4 overflow-x-auto">
+    <div class="flex justify-between items-center mb-2">
+      <div class="text-sm font-medium text-gray-400">Example Code</div>
+      <button 
+        class="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center"
+        (click)="copyToClipboard(question.codeExample)"
+        title="Copy to clipboard">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+        Copy
+      </button>
+    </div>
+    <pre class="text-blue-300 font-mono text-sm whitespace-pre-wrap">{{ question.codeExample }}</pre>
+  </div> -->
+  
+  <!-- Test Cases for Coding Questions -->
+  <div class="test-cases" *ngIf="question.category === 'Coding' && question.testCases?.length">
+    <div class="flex items-center mb-4">
+      <div class="h-8 w-8 rounded-lg bg-cyan-900/40 flex items-center justify-center mr-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      </div>
+      <h4 class="text-lg font-medium text-white">Test Cases</h4>
+      <!-- <div *ngIf="!showAllTestCases && question.testCases.length > 2" class="ml-auto">
+        <button 
+          class="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center"
+          (click)="toggleTestCases()">
+          {{ showAllTestCases ? 'Show Fewer' : 'Show All (' + question.testCases.length + ')' }}
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+               [ngClass]="{'transform rotate-180': showAllTestCases}">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div> -->
+    </div>
+    
+    <div class="space-y-4">
+      <div 
+        *ngFor="let testCase of visibleTestCases; let i = index" 
+        class="test-case bg-gray-800/60 border border-gray-700 rounded-lg p-4 animate-fade-in"
+        [style.animation-delay]="i * 100 + 'ms'">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-sm font-medium text-cyan-400">Test Case {{ i+1 }}</div>
+          <button 
+            class="text-xs text-gray-400 hover:text-blue-400 transition-colors"
+            (click)="copyTestCase(testCase)"
+            title="Copy test case">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-900/80 rounded-lg p-3">
+            <div class="text-xs text-gray-400 mb-1">Input:</div>
+            <pre class="text-white font-mono text-sm whitespace-pre-wrap">{{ formatTestCaseValue(testCase.input) }}</pre>
+          </div>
+          
+          <div class="bg-gray-900/80 rounded-lg p-3">
+            <div class="text-xs text-gray-400 mb-1">Expected Output:</div>
+            <pre class="text-green-300 font-mono text-sm whitespace-pre-wrap">{{ formatTestCaseValue(testCase.expectedOutput) }}</pre>
+          </div>
+        </div>
+        
+        <!-- <div *ngIf="testCase.explanation" class="mt-3 text-sm text-gray-300 bg-gray-900/40 p-3 rounded-lg border-l-2 border-blue-500">
+          <strong class="text-blue-400">Explanation:</strong> {{ testCase.explanation }}
+        </div> -->
+      </div>
+    </div>
+    
+    <!-- <div *ngIf="!showAllTestCases && question.testCases.length > 2" class="mt-4 text-center">
+      <button 
+        class="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center mx-auto"
+        (click)="toggleTestCases()">
+        Show All Test Cases ({{ question.testCases.length }})
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+    </div>
+  </div> -->
+  
+  <!-- Constraints (for coding questions) -->
+  <!-- <div *ngIf="question.constraints?.length" class="constraints mt-6">
+    <div class="flex items-center mb-3">
+      <div class="h-8 w-8 rounded-lg bg-yellow-900/40 flex items-center justify-center mr-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <h4 class="text-lg font-medium text-white">Constraints</h4>
+    </div> -->
+    
+    <ul class="list-disc list-inside space-y-2 text-gray-300 pl-4">
+      <!-- <li *ngFor="let constraint of question.constraints" class="animate-fade-in">
+        {{ constraint }}
+      </li> -->
+    </ul>
+  </div>
+  
+  <!-- Hints (expandable) -->
+  <!-- <div *ngIf="question.hints?.length" class="hints mt-6">
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center">
+        <div class="h-8 w-8 rounded-lg bg-purple-900/40 flex items-center justify-center mr-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+        <h4 class="text-lg font-medium text-white">Hints</h4>
+      </div>
+      
+      <button 
+        class="text-sm text-purple-400 hover:text-purple-300 transition-colors flex items-center"
+        (click)="toggleHints()">
+        {{ showHints ? 'Hide Hints' : 'Show Hints' }}
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+             [ngClass]="{'transform rotate-180': showHints}">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+    </div>
+    
+    <div *ngIf="showHints" class="space-y-3 animate-fade-in">
+      <div *ngFor="let hint of question.hints; let i = index" class="hint bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
+        <div class="flex items-start">
+          <div class="h-5 w-5 rounded-full bg-purple-900/60 flex-shrink-0 flex items-center justify-center mr-3 mt-0.5">
+            <span class="text-xs font-medium text-purple-300">{{ i+1 }}</span>
+          </div>
+          <p class="text-gray-300">{{ hint }}</p>
+        </div>
+      </div>
+    </div>
+  </div> -->
+  
+  <!-- Related Resources (if available) -->
+  <!-- <div *ngIf="question.resources?.length" class="resources mt-6">
+    <div class="flex items-center mb-3">
+      <div class="h-8 w-8 rounded-lg bg-blue-900/40 flex items-center justify-center mr-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      </div>
+      <h4 class="text-lg font-medium text-white">Related Resources</h4>
+    </div>
+    
+    <ul class="space-y-2">
+      <li *ngFor="let resource of question.resources" class="animate-fade-in">
+        <a [href]="resource.url" target="_blank" rel="noopener noreferrer" 
+           class="flex items-center p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg hover:bg-blue-900/40 transition-colors group">
+          <span class="text-blue-300 group-hover:text-blue-200 transition-colors">{{ resource.title || resource.url }}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      </li>
+    </ul>
+  </div> -->
+</div>
+
+<!-- No Question Available State -->
+<div class="no-question bg-gray-800/60 border border-gray-700 rounded-xl p-8 text-center animate-fade-in" *ngIf="!question">
+  <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-900/30 flex items-center justify-center">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+  <h3 class="text-xl font-semibold text-white mb-2">No Question Available</h3>
+  <p class="text-gray-300 mb-6">Please start a new interview session to begin.</p>
+  <button 
+    class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+    (click)="startNewSession()">
+    Start New Session
+  </button>
+</div>
+
+<!-- Copy Notification -->
+<div *ngIf="showCopyNotification" class="fixed bottom-4 right-4 bg-green-900/90 text-green-100 px-4 py-2 rounded-lg shadow-lg flex items-center animate-notification">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+  </svg>
+  Copied to clipboard!
+</div>
