@@ -1,0 +1,40 @@
+/* src/app/components/navbar/navbar.component.css */
+/* Animation for fade in */
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effect for nav links */
+a.router-link-active {
+  position: relative;
+}
+
+a.router-link-active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background-color: #38bdf8;
+  border-radius: 2px;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible, 
+a:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
