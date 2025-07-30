@@ -2,10 +2,11 @@ const Question = require('../models/question.model');
 const Session = require('../models/session.model');
 const axios = require('axios');
 
+const apiUrl = process.env.API_URL || 'http://localhost:5000/api/';
 // Helper function to get interview details
 async function getInterviewDetails(interviewId, token) {
   try {
-    const response = await axios.get(`http://localhost:5000/api/interviews/${interviewId}`, {
+    const response = await axios.get(`${apiUrl}interviews/${interviewId}`, {
       headers: {
         'Authorization': token
       }
@@ -139,12 +140,6 @@ exports.submitAnswer = async (req, res) => {
       }
     }
     
-    // Update session with answer
-    session.answeredQuestions.push({
-      questionId: question._id,
-      correct: answerIsCorrect,
-      userAnswer: answer
-    });
     
     session.questionCount++;
     
@@ -155,6 +150,14 @@ exports.submitAnswer = async (req, res) => {
         session.currentDifficulty = 'Medium';
       } else if (session.currentDifficulty === 'Medium') {
         session.currentDifficulty = 'Hard';
+      }else{
+        const interviewTopics = interview?.data?.interview?.topics || [];
+        if (interviewTopics.length > 0) {
+          const currentIndex = interviewTopics.indexOf(session.currentTopic);
+          const nextIndex = (currentIndex + 1) % interviewTopics.length;
+          session.currentTopic = interviewTopics[nextIndex];
+        }
+        session.currentDifficulty = mapDifficulty(interview?.data?.interview?.difficulty || 'Medium');
       }
       
       // Reset topic failures
@@ -264,6 +267,7 @@ exports.getNextTopic = async (req, res) => {
     if (!session) {
       return res.status(404).json({ message: 'Session not found' });
     }
+    
     
     // Get interview details to access topics
     const interview = await getInterviewDetails(session.interviewId, token);

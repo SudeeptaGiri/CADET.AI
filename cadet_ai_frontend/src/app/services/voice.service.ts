@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -7,8 +7,9 @@ import { BehaviorSubject } from 'rxjs';
 export class VoiceService {
   private recognition: any;
   private isListening = false;
+  private transcript = '';
   
-  private transcriptSubject = new BehaviorSubject<string>('');
+  private transcriptSubject = new Subject<string>();
   transcript$ = this.transcriptSubject.asObservable();
   
   private isListeningSubject = new BehaviorSubject<boolean>(false);
@@ -25,12 +26,17 @@ export class VoiceService {
       this.recognition.interimResults = true;
       
       this.recognition.onresult = (event: any) => {
-        let transcript = '';
+        let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            this.transcript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
         }
-        this.transcriptSubject.next(transcript);
+        this.transcriptSubject.next(this.transcript + interimTranscript);
       };
+
       
       this.recognition.onerror = (event: any) => {
         console.error('Speech recognition error', event);
@@ -59,7 +65,8 @@ export class VoiceService {
     this.isListening = true;
     this.isListeningSubject.next(true);
     this.transcriptSubject.next('');
-    
+    this.transcript = '';
+
     try {
       this.recognition.start();
     } catch (e) {

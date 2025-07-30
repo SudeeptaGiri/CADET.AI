@@ -240,6 +240,22 @@ export class AnswerInputComponent implements OnInit, OnDestroy {
         this.showFeedback(error.error?.message || 'Failed to submit answer. Please try again.', 'error');
       }
     });
+    const answerPayload = {
+      questionId: this.question._id,
+      userAnswer: this.question.category === 'Coding' ? this.codeAnswer : this.transcript,
+      topic: this.question.topic,
+      difficulty: this.question.difficulty,
+      isCorrect: undefined
+    }
+    this.sessionService.submitAnswerToCurrentQuestion(sessionId,answerPayload).subscribe(
+      (response:any) => {
+        console.log('Answer submitted successfully:', response);
+      },
+      (error:any) => {
+        console.error('Error submitting answer', error);
+      }
+    );
+    
   }
 
   skipQuestion(): void {
@@ -293,6 +309,21 @@ export class AnswerInputComponent implements OnInit, OnDestroy {
         this.showFeedback(error.error?.message || 'Failed to skip question. Please try again.', 'error');
       }
     });
+    const skipPayload = {
+     questionId: this.question._id, // or the relevant question id
+     topic: this.question.topic,
+     difficulty: this.question.difficulty
+    };
+
+    this.sessionService.skipAnswerToCurrentQuestion(sessionId,skipPayload).subscribe({
+      next: (response:any) => {
+        console.log('Question skipped successfully:', response);
+      },
+      error: (error:any) => {
+        console.error('Error skipping question', error);
+      }
+    });
+
   }
 
   private resetInputs(): void {

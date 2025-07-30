@@ -14,6 +14,7 @@ router.use(authController.protect);
 //routes accessible to all authenticated candidates
 router.get('/my-interview', interviewController.getMyInterview);
 router.get('/:id', interviewController.getInterview);
+router.put('/:id/complete', interviewController.completeInterview);
 
 // All routes require admin access
 router.use(authController.restrictToAdmin);

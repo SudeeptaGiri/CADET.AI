@@ -288,7 +288,39 @@ export class SessionService {
       })
     );
   }
-  
+
+  /**
+   * Submit an answer for the current question in the session
+   * @param sessionId The session _id
+   * @param answerData The answer object (questionId, topic, difficulty, userAnswer, isCorrect)
+   */
+  submitAnswerToCurrentQuestion(sessionId: string, answerData: { 
+    questionId: string, 
+    topic: string, 
+    difficulty: string, 
+    userAnswer: string, 
+    isCorrect?: boolean 
+  }): Observable<any> {
+    const headers = this.authService.getAuthHeaders();
+    return this.http.post(`${this.apiUrl}/${sessionId}/answer`, answerData, { headers });
+  }
+
+  /**
+   * Skip the current question in the session
+   * @param sessionId The session _id
+   * @param skipData The skip object (questionId, topic, difficulty, userAnswer, isCorrect)
+   */
+  skipAnswerToCurrentQuestion(sessionId: string, skipData: { 
+    questionId: string, 
+    topic: string, 
+    difficulty: string, 
+    userAnswer?: string, 
+    isCorrect?: boolean 
+  }): Observable<any> {
+    const headers = this.authService.getAuthHeaders();
+    return this.http.post(`${this.apiUrl}/${sessionId}/skip`, skipData, { headers });
+  }
+
   /**
    * Clear the current session data
    */

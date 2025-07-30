@@ -8,6 +8,12 @@ router.use(authController.protect);
 
 router.post('/', sessionController.createSession);
 
+//Answer question
+router.post('/:id/answer', sessionController.answerQuestion);
+
+//Skip question
+router.post('/:id/skip', sessionController.skipQuestion);
+
 // Get session by ID
 router.get('/:id', sessionController.getSessionById);
 

@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { SessionSummaryComponent } from '../session-summary/session-summary.component';
 import { Subscription, interval } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
+import { ReportService } from '../../services/report.service';
 
 @Component({
   selector: 'app-interview-session',
@@ -47,7 +48,8 @@ export class InterviewSessionComponent implements OnInit, OnDestroy {
   constructor(
     private sessionService: SessionService,
     private interviewService: InterviewService,
-    private router: Router
+    private router: Router,
+    private reportService:ReportService
   ) { }
   
   @HostListener('document:keydown', ['$event'])
@@ -390,7 +392,37 @@ export class InterviewSessionComponent implements OnInit, OnDestroy {
   }
   
   endSession(): void {
-    this.showEndSessionModal = true;
+
+    this.reportService.generateAIReport(this.interviewService.getCurrentInterviewId() || '').subscribe({
+      next: (response:any) => {
+        console.log('AI Report generated successfully', response);
+      },
+      error: (error:any) => {
+        console.error('Error generating AI report', error);
+        alert('Failed to generate AI report. Please try again later.');
+      }
+    });
+
+    this.interviewService.completeInterview(this.interviewService.getCurrentInterviewId() || '').subscribe((response:any)=>{
+      console.log('Interview completed successfully', response);
+      this.sessionService.clearCurrentSession();
+      this.sessionService.clearCurrentQuestion();
+      localStorage.removeItem('interviewTimeRemaining');
+      localStorage.removeItem('interviewId');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      this.showEndSessionModal = true;
+      
+      // Navigate to results page
+      this.router.navigate(['/access-interview']);
+    }, 
+    error => {
+      alert('Error completing interview. Please try again later.');
+      this.showEndSessionModal = false;
+      console.error('Error completing interview', error);
+    });
+    
+
   }
   
   cancelEndSession(): void {

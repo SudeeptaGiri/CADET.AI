@@ -20,6 +20,6 @@ router.get('/candidate/:candidateId', reportController.getReportsByCandidate);
 router.get('/:id', reportController.getReportById);
 router.patch('/:id', reportController.updateReport);
 router.delete('/:id', reportController.deleteReport);
-router.post('/generate/:interviewId', reportController.generateAIReport);
+router.post('/:interviewId/generate', reportController.generateAIReport);
 
 module.exports = router;

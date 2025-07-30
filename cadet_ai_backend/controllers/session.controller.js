@@ -3,9 +3,10 @@ const Question = require('../models/question.model');
 const axios = require('axios');
 
 // Helper function to get interview details
+const apiUrl = process.env.API_URL || 'http://localhost:5000/api/';
 async function getInterviewDetails(interviewId, token) {
   try {
-    const response = await axios.get(`http://localhost:5000/api/interviews/${interviewId}`, {
+    const response = await axios.get(`${apiUrl}interviews/${interviewId}`, {
       headers: {
         'Authorization': token
       }
@@ -19,67 +20,120 @@ async function getInterviewDetails(interviewId, token) {
 
 // Map interview difficulty to question difficulty
 function mapDifficulty(interviewDifficulty) {
-  switch(interviewDifficulty.toLowerCase()) {
-    case 'beginner':
-      return 'Easy';
-    case 'intermediate':
-      return 'Medium';
-    case 'advanced':
-      return 'Hard';
-    default:
-      return 'Medium';
+  const difficulty = interviewDifficulty?.toLowerCase() || '';
+
+  if (difficulty.includes('begin') || difficulty.includes('easy')) {
+    return 'Easy';
+  } else if (difficulty.includes('advanc') || difficulty.includes('hard')) {
+    return 'Hard';
+  } else {
+    return 'Medium'; // Default to Medium for intermediate or unknown
   }
 }
 
 // Create a new session
+// exports.createSession = async (req, res) => {
+//   try {
+//     const { userId, interviewId, initialTopic } = req.body;
+//     const token = req.headers?.authorization;
+    
+//     // Get interview details from the external API
+//     const interview = await getInterviewDetails(interviewId, token);
+//     const interviewData = interview.data.interview;
+//     // Map interview difficulty to question difficulty
+//     const questionDifficulty = mapDifficulty(interviewData.difficulty);
+    
+    
+//     // Use the first topic from interview if initialTopic not provided
+//     const topic = initialTopic || (interviewData.topics.length > 0 ? interviewData.topics[0] : 'General');
+//     console.log('Topic:', topic);
+//     const session = new Session({
+//       userId,
+//       interviewId,
+//       currentTopic: topic,
+//       currentDifficulty: questionDifficulty,
+//       questionCount: 0,
+//       topicFailures: 0,
+//       answeredQuestions: []
+//     });
+    
+//     await session.save();
+    
+//     // Get the first question
+//     const firstQuestion = await Question.findOne({
+//       topic: session.currentTopic,
+//       difficulty: session.currentDifficulty
+//     });
+    
+//     // If no question found with exact difficulty, try any difficulty
+//     let questionToReturn = firstQuestion;
+//     if (!questionToReturn) {
+//       questionToReturn = await Question.findOne({
+//         topic: session.currentTopic
+//       });
+//     }
+    
+//     // If still no question, try first topic
+//     if (!questionToReturn && interviewData.topics.length > 0) {
+//       questionToReturn = await Question.findOne({
+//         topic: interviewData.topics[0]
+//       });
+//     }
+    
+//     res.status(201).json({
+//       session,
+//       firstQuestion: questionToReturn
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: 'Error creating session', error: error.message });
+//   }
+// };
+// createSession controller (updated)
 exports.createSession = async (req, res) => {
   try {
     const { userId, interviewId, initialTopic } = req.body;
     const token = req.headers?.authorization;
-    
-    // Get interview details from the external API
+
+    // 1. Check if session already exists for this interview
+    let session = await Session.findOne({ interviewId });
+    if (session) {
+      return res.status(200).json({
+        message: 'Session already exists for this interview',
+        session
+      });
+    }
+
+    // 2. Get interview details (for topics and difficulty)
     const interview = await getInterviewDetails(interviewId, token);
     const interviewData = interview.data.interview;
-    // Map interview difficulty to question difficulty
     const questionDifficulty = mapDifficulty(interviewData.difficulty);
-    
-    
-    // Use the first topic from interview if initialTopic not provided
+
+    // pick topic
     const topic = initialTopic || (interviewData.topics.length > 0 ? interviewData.topics[0] : 'General');
-    console.log('Topic:', topic);
-    const session = new Session({
+
+    // 3. Create new session document
+    session = new Session({
       userId,
       interviewId,
-      currentTopic: topic,
-      currentDifficulty: questionDifficulty,
-      questionCount: 0,
-      topicFailures: 0,
-      answeredQuestions: []
+      answeredQuestions: [],  // history of all Q&A will go here
+      skippedQuestions: []    // store skipped questions if needed
+      // status, createdAt, etc. default by schema
     });
-    
     await session.save();
-    
-    // Get the first question
-    const firstQuestion = await Question.findOne({
-      topic: session.currentTopic,
-      difficulty: session.currentDifficulty
+
+    // 4. Find first question (as before)
+    let questionToReturn = await Question.findOne({
+      topic: topic,
+      difficulty: questionDifficulty
     });
-    
-    // If no question found with exact difficulty, try any difficulty
-    let questionToReturn = firstQuestion;
+
     if (!questionToReturn) {
-      questionToReturn = await Question.findOne({
-        topic: session.currentTopic
-      });
+      questionToReturn = await Question.findOne({ topic });
     }
-    
-    // If still no question, try first topic
     if (!questionToReturn && interviewData.topics.length > 0) {
-      questionToReturn = await Question.findOne({
-        topic: interviewData.topics[0]
-      });
+      questionToReturn = await Question.findOne({ topic: interviewData.topics[0] });
     }
-    
+
     res.status(201).json({
       session,
       firstQuestion: questionToReturn
@@ -88,6 +142,7 @@ exports.createSession = async (req, res) => {
     res.status(500).json({ message: 'Error creating session', error: error.message });
   }
 };
+
 
 // Get session by ID
 exports.getSessionById = async (req, res) => {
@@ -140,8 +195,11 @@ exports.completeSession = async (req, res) => {
       return res.status(404).json({ message: 'Session not found' });
     }
     
-    // Mark as completed
+    //Mark as Completed
     session.status = 'completed';
+    session.finishedAt = new Date();
+    await session.save();
+
     await session.save();
     
     res.status(200).json(session);
@@ -173,3 +231,86 @@ exports.updateSession = async (req, res) => {
     res.status(500).json({ message: 'Error updating session', error: error.message });
   }
 };
+
+
+//Answer Question
+exports.answerQuestion = async (req, res) => {
+  try {
+    const { id } = req.params;                  // session _id
+    const { questionId, topic, difficulty, userAnswer, isCorrect } = req.body;
+
+    // Add the answered question to the session's history
+    const question = await Question.findById(questionId);
+    if (!question) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+    const questionText = question.questionText || 'No question text available';
+    const update = {
+      $push: {
+        answeredQuestions: {
+          questionId,
+          questionText,
+          topic,
+          difficulty,
+          userAnswer,
+          isCorrect,
+          timestamp: new Date()
+        }
+      },
+      $inc: { questionCount: 1 }
+    };
+
+    const session = await Session.findByIdAndUpdate(id, update, { new: true });
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    res.status(200).json(session);
+
+  } catch (error) {
+    res.status(500).json({ message: "Error updating session with answer", error: error.message });
+  }
+};
+
+// Skip Question
+exports.skipQuestion = async (req, res) => {
+  try {
+    const { id } = req.params;                  // session _id
+    const { questionId, topic, difficulty, userAnswer, isCorrect } = req.body;
+
+    
+
+    // Add the answered question to the session's history
+    const question = await Question.findById(questionId);
+    if (!question) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+    const questionText = question.questionText || 'No question text available';
+    const update = {
+      $push: {
+        skippedQuestions: {
+          questionId,
+          questionText,
+          topic,
+          difficulty,
+          userAnswer,
+          isCorrect,
+          timestamp: new Date()
+        }
+      },
+      $inc: { questionCount: 1 }
+    };
+
+    const session = await Session.findByIdAndUpdate(id, update, { new: true });
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    res.status(200).json(session);
+
+  } catch (error) {
+    res.status(500).json({ message: "Error updating session with answer", error: error.message });
+  }
+}

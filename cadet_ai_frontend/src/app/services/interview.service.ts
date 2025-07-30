@@ -44,4 +44,12 @@ export class InterviewService {
   getCurrentInterviewId(): string | null {
     return localStorage.getItem('interviewId');
   }
+
+  completeInterview(interviewId: string): Observable<any> {
+    return this.http.put(
+      `${this.apiUrl}/interviews/${interviewId}/complete`,
+      {},
+      { headers: this.authService.getAuthHeaders() }
+    );
+  }
 }

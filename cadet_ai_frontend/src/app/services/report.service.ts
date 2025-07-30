@@ -7,7 +7,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class ReportService {
-  private apiUrl = `${environment.apiUrl}/reports`;
+  private apiUrl = 'http://localhost:5000/api/reports';
 
   constructor(private http: HttpClient) { }
 
